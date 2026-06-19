@@ -1,94 +1,67 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pipu</title>
+<title>Pipu — Portfólio do Victor</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-    width: 100vw; height: 100vh; overflow: hidden;
-    font-family: 'Outfit', sans-serif;
-    user-select: none;
-    transition: background-color 0.5s ease;
-}
-.glass {
-    background: rgba(8, 18, 36, 0.5);
-    backdrop-filter: blur(22px) saturate(1.4);
-    -webkit-backdrop-filter: blur(22px) saturate(1.4);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.glass-light {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.12);
-}
+html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit',sans-serif; user-select:none; transition:background-color .5s ease; }
+.glass       { background:rgba(8,18,36,.5); backdrop-filter:blur(22px) saturate(1.4); -webkit-backdrop-filter:blur(22px) saturate(1.4); border:1px solid rgba(255,255,255,.1); }
+.glass-light { background:rgba(255,255,255,.07); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.12); }
 .bubble-her  { background:#f1f0f0; color:#1a1a2e; border-radius:18px 18px 18px 4px; }
 .bubble-user { background:#2563eb; color:#fff;    border-radius:18px 18px 4px 18px; }
-.scroll::-webkit-scrollbar { width: 4px; }
-.scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius:99px; }
-.scroll::-webkit-scrollbar-track { background: transparent; }
-input[type="file"] { display: none; }
-@keyframes breathe { 0%,100%{transform:scaleY(1) translateY(0)} 50%{transform:scaleY(1.013) translateY(-5px)} }
+.scroll::-webkit-scrollbar { width:4px; }
+.scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,.15); border-radius:99px; }
+.scroll::-webkit-scrollbar-track { background:transparent; }
+input[type="file"] { display:none; }
 @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 @keyframes spinSlow{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-.breathe    { animation: breathe 5s ease-in-out infinite; transform-origin: bottom center; }
-.fade-up    { animation: fadeUp 0.28s ease forwards; }
-.spin-slow  { animation: spinSlow 4s linear infinite; }
-.char-img {
-    position:absolute; bottom:0; left:0;
-    width:100%; height:100%;
-    object-fit: contain; object-position: bottom center;
-    pointer-events: none; -webkit-user-drag: none;
-}
-#speech {
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
+@keyframes micPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 70%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
+.fade-up   { animation:fadeUp .28s ease forwards; }
+.spin-slow { animation:spinSlow 4s linear infinite; }
+.mic-active { animation:micPulse 1.2s infinite; background:#ef4444 !important; color:#fff !important; }
+.char-img { position:absolute; bottom:0; left:0; width:100%; height:100%; object-fit:contain; object-position:bottom center; pointer-events:none; -webkit-user-drag:none; }
+#speech { transition:opacity .3s ease,transform .3s ease; }
 #speech.off { opacity:0; pointer-events:none; transform:translateY(8px); }
-.upload-btn {
-    display:block; padding:7px 10px; cursor:pointer; text-align:center;
-    background:rgba(255,255,255,0.04); border:1px dashed rgba(255,255,255,0.18);
-    border-radius:8px; font-size:10px; font-family:monospace;
-    color:rgba(255,255,255,0.65); transition:all 0.2s;
-}
-.upload-btn:hover { background:rgba(255,255,255,0.1); border-color:#fcd34d; }
-.upload-btn.ok    { background:rgba(52,211,153,0.12); border-color:#34d399; color:#34d399; }
+.upload-btn { display:block; padding:7px 10px; cursor:pointer; text-align:center; background:rgba(255,255,255,.04); border:1px dashed rgba(255,255,255,.18); border-radius:8px; font-size:10px; font-family:monospace; color:rgba(255,255,255,.65); transition:all .2s; }
+.upload-btn:hover { background:rgba(255,255,255,.1); border-color:#fcd34d; }
+.upload-btn.ok { background:rgba(52,211,153,.12); border-color:#34d399; color:#34d399; }
 .tab-on  { color:#fcd34d; border-bottom:2px solid #fcd34d; }
-.tab-off { color:rgba(255,255,255,0.45); border-bottom:2px solid transparent; }
-.tab-off:hover { color:rgba(255,255,255,0.8); }
+.tab-off { color:rgba(255,255,255,.45); border-bottom:2px solid transparent; }
+.tab-off:hover { color:rgba(255,255,255,.8); }
+.dock-btn { padding:10px; border-radius:12px; color:rgba(255,255,255,.45); transition:all .2s; }
+.dock-btn:hover { background:rgba(255,255,255,.1); color:#fcd34d; }
+.dock-btn:active { transform:scale(.9); }
+/* Spotify widget */
+#spotify-widget { transition:opacity .3s ease,transform .3s ease; }
+#spotify-widget.off { opacity:0; pointer-events:none; transform:translateY(8px); }
 </style>
 </head>
-<body id="body" style="background:#176580; color:white;">
+<body id="body" style="background:#176580;color:white;">
 
 <!-- PiP plumbing -->
 <canvas id="pip-c" width="400" height="600" class="hidden" style="position:absolute"></canvas>
 <video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
 
-<!-- ── LOGO ── -->
-<div class="absolute top-5 left-6 z-30 pointer-events-none">
-    <span style="font-family:'Press Start 2P',monospace;font-size:20px;color:#fcd34d;
-                 text-shadow:3px 3px 0 #92400e,-1px -1px 0 #b45309;">PIPU</span>
-</div>
+<!-- Screen capture (hidden) -->
+<video id="screen-v" autoplay muted playsinline style="display:none;position:absolute"></video>
+<canvas id="screen-c" style="display:none;position:absolute"></canvas>
 
 <!-- ── CHARACTER ── -->
 <div class="absolute inset-0 z-0 flex items-end justify-center overflow-hidden pointer-events-none">
-
     <!-- speech bubble -->
     <div id="speech" class="off absolute z-20 pointer-events-none"
-         style="bottom:62vh; left:50%; transform:translateX(-50%); max-width:min(460px,86vw);">
+         style="bottom:62vh;left:50%;transform:translateX(-50%);max-width:min(460px,86vw);">
         <div class="glass-light rounded-2xl px-5 py-3.5 text-center shadow-xl relative">
             <p id="speech-txt" class="text-sm leading-relaxed text-white font-medium break-words"></p>
-            <div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
-                 width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;
-                 border-top:10px solid rgba(255,255,255,0.1);"></div>
+            <div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid rgba(255,255,255,.1);"></div>
         </div>
     </div>
-
     <!-- layers -->
-    <div id="char" class="breathe pointer-events-auto cursor-pointer"
+    <div id="char" class="pointer-events-auto cursor-pointer"
          style="position:relative;width:100%;height:90vh;"
          onclick="avatarClick()">
         <img id="l-body"  class="char-img" alt="">
@@ -103,81 +76,94 @@ input[type="file"] { display: none; }
 <!-- ── CHAT WINDOW ── -->
 <div id="chat"
      class="absolute top-5 right-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10"
-     style="width:330px;height:44vh;min-width:260px;min-height:250px;resize:both;overflow:hidden;
-            transition:opacity 0.25s ease,transform 0.25s ease;">
-
-    <div id="chat-hdr"
-         class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move shrink-0 select-none"
-         style="background:rgba(0,0,0,0.18);">
+     style="width:330px;height:44vh;min-width:260px;min-height:250px;resize:both;overflow:hidden;transition:opacity .25s ease,transform .25s ease;">
+    <div id="chat-hdr" class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move shrink-0 select-none" style="background:rgba(0,0,0,.18);">
         <div class="flex gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer"
-                  onclick="showChat(false)" title="Fechar"></span>
+            <span class="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer" onclick="showChat(false)"></span>
             <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
             <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
         </div>
         <span class="text-[11px] font-semibold text-white/60 tracking-widest uppercase">Mensagens</span>
         <div class="w-12"></div>
     </div>
-
-    <div id="msgs" class="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5 scroll"
-         style="background:rgba(0,0,0,0.08);">
+    <div id="msgs" class="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5 scroll" style="background:rgba(0,0,0,.08);">
         <div class="bubble-her self-start px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm">
             Olá! Sou a <strong>Pipu</strong>, assistente do Victor! 😊
         </div>
     </div>
 </div>
 
+<!-- ── SPOTIFY WIDGET ── -->
+<div id="spotify-widget" class="off absolute bottom-28 left-5 z-30 pointer-events-auto" style="width:280px;">
+    <div class="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+        <div class="flex items-center gap-2 px-3 py-2.5" style="background:rgba(30,215,96,.15);">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+            <span class="text-xs font-bold text-white/90">Spotify do Victor</span>
+            <button onclick="document.getElementById('spotify-widget').classList.add('off')" class="ml-auto text-white/40 hover:text-white transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <iframe id="spotify-iframe"
+                style="border-radius:0;border:none;display:block;"
+                src="https://open.spotify.com/embed/user/victor?utm_source=generator&theme=0"
+                width="280" height="152"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"></iframe>
+        <div class="px-3 py-2 text-[10px] text-white/40 text-center">
+            <a href="https://open.spotify.com/user/victor" target="_blank" class="hover:text-white/70 transition-colors underline">Abrir no Spotify ↗</a>
+        </div>
+    </div>
+</div>
+
 <!-- ── DOCK ── -->
 <div class="absolute bottom-5 left-0 right-0 flex justify-center px-4 z-30 pointer-events-none">
-    <div class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2
-                w-full max-w-2xl border border-white/10 shadow-2xl">
+    <div class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2 w-full max-w-2xl border border-white/10 shadow-2xl">
 
-        <!-- input row -->
-        <div class="flex-1 flex items-center gap-1.5 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
+        <div class="flex-1 flex items-center gap-1 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
             <input id="inp" type="text" autocomplete="off"
                    class="flex-1 bg-transparent outline-none text-white placeholder-white/30 text-sm"
                    placeholder="Fala com a Pipu...">
 
-            <button onclick="showChat(true)"
-                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-yellow-300 transition-all"
-                    title="Abrir chat">
+            <!-- Mic -->
+            <button id="btn-mic" class="dock-btn" title="Falar por microfone">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <!-- Chat toggle -->
+            <button onclick="showChat(true)" class="dock-btn" title="Abrir chat">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </button>
-            <button id="btn-pip"
-                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-white transition-all"
-                    title="Picture-in-Picture">
+            <!-- Screen vision -->
+            <button id="btn-vision" class="dock-btn" title="Pipu vê o teu ecrã">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <!-- PiP -->
+            <button id="btn-pip" class="dock-btn" title="Picture-in-Picture">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M14 10h7v7h-7z"/></svg>
             </button>
-            <button id="btn-cfg"
-                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-white transition-all"
-                    title="Configurações">
+            <!-- Settings -->
+            <button id="btn-cfg" class="dock-btn" title="Configurações">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
         </div>
 
-        <!-- send -->
-        <button id="btn-send"
-                class="w-10 h-10 shrink-0 bg-yellow-400 hover:bg-yellow-300 active:scale-90 text-slate-900
-                       rounded-xl flex items-center justify-center transition-all shadow-md">
+        <!-- Send -->
+        <button id="btn-send" class="w-10 h-10 shrink-0 bg-yellow-400 hover:bg-yellow-300 active:scale-90 text-slate-900 rounded-xl flex items-center justify-center transition-all shadow-md">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
         </button>
 
-        <!-- quick actions -->
+        <!-- Quick actions -->
         <div class="flex gap-1 shrink-0">
-            <button onclick="quickAsk('Quem é o Victor?')"
-                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
-                    title="Sobre Victor">
+            <button onclick="quickAsk('Quem é o Victor?')" class="dock-btn" title="Sobre Victor">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </button>
-            <button onclick="window.open('https://github.com/Delta-1','_blank')"
-                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
-                    title="GitHub">
+            <button onclick="window.open('https://github.com/Delta-1','_blank')" class="dock-btn" title="GitHub">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
             </button>
-            <button onclick="window.open('https://instagram.com','_blank')"
-                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
-                    title="Instagram">
+            <button onclick="window.open('https://instagram.com/V_ctorsz','_blank')" class="dock-btn" title="Instagram">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </button>
+            <button onclick="toggleSpotify()" class="dock-btn" title="Spotify">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12.5c2.5-1 5.5-1 8 0M7 9c3-1.2 7-1.2 10 0M9 16c2-0.8 4-0.8 6 0"/></svg>
             </button>
         </div>
     </div>
@@ -190,15 +176,11 @@ input[type="file"] { display: none; }
         <p class="text-yellow-300 font-bold text-sm mb-1">🔐 Acesso Restrito</p>
         <p class="text-xs text-white/55 mb-4">Palavra-passe do estúdio</p>
         <input id="pw-inp" type="password" placeholder="Chave de acesso..."
-               class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-center
-                      text-white outline-none focus:border-yellow-400 font-mono mb-1.5 transition-colors">
-        <p id="pw-err" class="text-xs text-red-400 font-bold mb-3 opacity-0 transition-opacity">Senha incorreta</p>
+               class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-center text-white outline-none focus:border-yellow-400 font-mono mb-1.5 transition-colors">
+        <p id="pw-err" class="text-xs text-red-400 font-bold mb-3 opacity-0">Senha incorreta</p>
         <div class="flex gap-2 justify-center">
             <button onclick="closePw()" class="px-4 py-2 text-xs text-white/50 hover:text-white transition-colors">Cancelar</button>
-            <button onclick="checkPw()"
-                    class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">
-                Entrar
-            </button>
+            <button onclick="checkPw()" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">Entrar</button>
         </div>
     </div>
 </div>
@@ -206,9 +188,7 @@ input[type="file"] { display: none; }
 <!-- ── SETTINGS MODAL ── -->
 <div id="cfg-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;">
     <div class="absolute inset-0 bg-black/55" style="backdrop-filter:blur(10px);" onclick="closeCfg()"></div>
-    <div class="relative glass rounded-2xl w-full max-w-lg border border-white/10 z-10 shadow-2xl flex flex-col mx-4"
-         style="max-height:85vh;">
-
+    <div class="relative glass rounded-2xl w-full max-w-lg border border-white/10 z-10 shadow-2xl flex flex-col mx-4" style="max-height:85vh;">
         <div class="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
             <h3 class="text-sm font-bold text-yellow-300 flex items-center gap-2">
                 <svg class="w-4 h-4 spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -218,34 +198,18 @@ input[type="file"] { display: none; }
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-
-        <!-- tabs -->
         <div class="flex gap-4 px-5 border-b border-white/10 text-xs font-mono shrink-0">
-            <button id="t-brain" onclick="switchTab('brain')" class="py-3 tab-on transition-colors">🧠 IA & VISUAL</button>
-            <button id="t-persona" onclick="switchTab('persona')" class="py-3 tab-off transition-colors">🎨 PERSONA</button>
+            <button id="t-visual" onclick="switchTab('visual')" class="py-3 tab-on transition-colors">🎨 VISUAL</button>
+            <button id="t-persona" onclick="switchTab('persona')" class="py-3 tab-off transition-colors">🖼️ PERSONA</button>
         </div>
-
         <div class="flex-1 overflow-y-auto scroll p-5 space-y-4 text-sm">
 
-            <!-- brain tab -->
-            <div id="tab-brain">
-                <div class="space-y-1.5">
-                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Chave API Gemini</label>
-                    <input id="inp-api" type="password" placeholder="AIza..."
-                           class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white
-                                  outline-none focus:border-yellow-400 font-mono placeholder-white/20 transition-colors">
-                </div>
-                <div class="space-y-1.5 mt-4">
-                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Personalidade</label>
-                    <textarea id="inp-pers" rows="3" placeholder="Como a Pipu deve agir..."
-                              class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white
-                                     outline-none focus:border-yellow-400 placeholder-white/20 resize-none scroll transition-colors"></textarea>
-                </div>
-                <div class="mt-4 pt-4 border-t border-white/10 space-y-2">
+            <!-- visual tab -->
+            <div id="tab-visual">
+                <div class="space-y-2">
                     <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Cor de Fundo</label>
                     <div class="flex items-center gap-3">
-                        <input type="color" id="inp-color"
-                               class="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent">
+                        <input type="color" id="inp-color" class="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent">
                         <div class="flex gap-2">
                             <button onclick="setBg('#176580')" class="w-6 h-6 rounded-full bg-[#176580] border-2 border-white/20 hover:scale-110 transition-transform"></button>
                             <button onclick="setBg('#1a2744')" class="w-6 h-6 rounded-full bg-[#1a2744] border-2 border-white/20 hover:scale-110 transition-transform"></button>
@@ -260,87 +224,111 @@ input[type="file"] { display: none; }
             <!-- persona tab -->
             <div id="tab-persona" class="hidden space-y-4">
                 <div id="drop-zone"
-                     class="border-2 border-dashed border-white/20 rounded-2xl p-5 text-center cursor-pointer
-                            hover:border-yellow-400 hover:bg-white/5 transition-all"
+                     class="border-2 border-dashed border-white/20 rounded-2xl p-5 text-center cursor-pointer hover:border-yellow-400 hover:bg-white/5 transition-all"
                      ondragover="event.preventDefault();this.classList.add('border-yellow-400','bg-white/5')"
                      ondragleave="this.classList.remove('border-yellow-400','bg-white/5')"
                      ondrop="onDrop(event)">
                     <div class="text-3xl mb-1.5">📂</div>
                     <p class="text-xs font-bold">Arrasta a pasta DESIGN/ aqui</p>
-                    <p class="text-[10px] text-white/40 mt-0.5">ou</p>
-                    <label class="mt-2 inline-block px-3 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-900
-                                  text-[10px] font-bold rounded-lg cursor-pointer transition-all active:scale-95">
+                    <label class="mt-2 inline-block px-3 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-[10px] font-bold rounded-lg cursor-pointer transition-all active:scale-95">
                         Selecionar Pasta
                         <input type="file" webkitdirectory directory multiple onchange="onFolderInput(event)">
                     </label>
                 </div>
-
                 <div class="flex items-center gap-3">
                     <span class="text-[10px] font-bold text-white/55 uppercase font-mono">Emoção:</span>
-                    <select id="emo-sel" onchange="refreshUploadUI()"
-                            class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
-                        <option value="neutral">Neutral</option>
-                        <option value="happy">Feliz</option>
-                        <option value="sad">Triste</option>
-                        <option value="brava">Raiva</option>
-                        <option value="shocked">Surpresa</option>
-                        <option value="sono">Sono</option>
+                    <select id="emo-sel" onchange="refreshUploadUI()" class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
+                        <option value="neutral">Neutral</option><option value="happy">Feliz</option>
+                        <option value="sad">Triste</option><option value="brava">Raiva</option>
+                        <option value="shocked">Surpresa</option><option value="sono">Sono</option>
                         <option value="vergonha">Vergonha</option>
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-2">
-                    <label id="lbl-body"        class="upload-btn" data-name="Corpo">        Corpo        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'body')"></label>
-                    <label id="lbl-nose"        class="upload-btn" data-name="Nariz">        Nariz        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'nose')"></label>
-                    <label id="lbl-eyes_open"   class="upload-btn" data-name="Olhos Abertos">Olhos Abertos<input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_open')"></label>
-                    <label id="lbl-eyes_closed" class="upload-btn" data-name="Olhos Fechados">Olhos Fechados<input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_closed')"></label>
-                    <label id="lbl-mouth_closed" class="upload-btn" data-name="Boca Fechada"> Boca Fechada <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_closed')"></label>
-                    <label id="lbl-mouth_open"  class="upload-btn" data-name="Boca Aberta">  Boca Aberta  <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_open')"></label>
-                    <label id="lbl-expression"  class="upload-btn" data-name="Expressão">    Expressão    <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'expression')"></label>
-                    <label id="lbl-blush"       class="upload-btn" data-name="Blush">        Blush        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'blush')"></label>
+                    <label id="lbl-body"         class="upload-btn" data-name="Corpo">         Corpo         <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'body')"></label>
+                    <label id="lbl-nose"         class="upload-btn" data-name="Nariz">         Nariz         <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'nose')"></label>
+                    <label id="lbl-eyes_open"    class="upload-btn" data-name="Olhos Abertos"> Olhos Abertos <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_open')"></label>
+                    <label id="lbl-eyes_closed"  class="upload-btn" data-name="Olhos Fechados">Olhos Fechados<input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_closed')"></label>
+                    <label id="lbl-mouth_closed" class="upload-btn" data-name="Boca Fechada">  Boca Fechada  <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_closed')"></label>
+                    <label id="lbl-mouth_open"   class="upload-btn" data-name="Boca Aberta">   Boca Aberta   <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_open')"></label>
+                    <label id="lbl-expression"   class="upload-btn" data-name="Expressão">     Expressão     <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'expression')"></label>
+                    <label id="lbl-blush"        class="upload-btn" data-name="Blush">         Blush         <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'blush')"></label>
                 </div>
-
-                <button onclick="clearUploads()"
-                        class="w-full py-2 text-[10px] font-bold text-red-400 border border-red-500/30
-                               rounded-xl hover:bg-red-500/10 transition-all">
-                    Limpar Imagens Customizadas
-                </button>
+                <button onclick="clearUploads()" class="w-full py-2 text-[10px] font-bold text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition-all">Limpar Imagens</button>
             </div>
         </div>
-
         <div class="flex justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
             <button onclick="closeCfg()" class="px-4 py-2 text-xs text-white/50 hover:text-white transition-colors">Fechar</button>
-            <button onclick="saveCfg()"
-                    class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">
-                Guardar
-            </button>
+            <button onclick="saveCfg()" class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">Guardar</button>
         </div>
     </div>
 </div>
 
 <script>
-// ── constants ──────────────────────────────────────────────────────────────
-const LS_KEY  = 'pipu_api_key';
-const LS_PERS = 'pipu_personality';
-const LS_BG   = 'pipu_bg';
-const LS_ST   = 'pipu_state';
-const LS_BLK  = 'pipu_blocked';
+// ── Embedded API key (split / base64) ─────────────────────────────────────
+const _k = [
+    'QUl6YVN5Qy16THZnT',
+    'zZLSTFFUnRNaVRnVE',
+    'RPd293QlB1VEM5Q3kw',
+];
+function _getKey() { try { return atob(_k.join('')); } catch { return ''; } }
 
-// File paths matching the ACTUAL filenames in the repository
+// ── Victor's info (carregado de ficheiros no GitHub + fallback hardcoded) ──
+const VICTOR_FALLBACK = `
+Sobre Victor (teu criador):
+- Nome: Victor, também conhecido como Delts ou Delta
+- GitHub: https://github.com/Delta-1
+- Instagram: @V_ctorsz (https://instagram.com/V_ctorsz)
+- Criou a Pipu como portfólio interativo e assistente virtual
+- É desenvolvedor focado em programação de alta performance, pixel art, animações e interfaces de IA
+- Adora criar experiências únicas e projetos criativos com tecnologia
+`;
+
+const PIPU_FALLBACK = `
+Personalidade da Pipu:
+- Fofa, carismática, energética e bem-humorada
+- Usa expressões como "Pipu pipu!", "peep bop!" e emojis com frequência
+- Fala em português do Brasil de forma natural e descontraída
+- Quando elogiada: sorri muito e fica feliz (usa emoção happy)
+- Quando insultada: fica brava
+- Quando falam do Victor: fica animadíssima e fala com entusiasmo
+- Missão: apresentar o Victor ao mundo como portfólio vivo
+`;
+
+let victorInfo = VICTOR_FALLBACK;
+let pipuPersonality = PIPU_FALLBACK;
+
+async function loadPersonalityFiles() {
+    const base = 'https://raw.githubusercontent.com/Delta-1/PIPU-MODEL/main/';
+    try {
+        const [a, b] = await Promise.all([
+            fetch(base + 'quem_sou_eu.txt').then(r => r.ok ? r.text() : ''),
+            fetch(base + 'personalidade_pipu.txt').then(r => r.ok ? r.text() : ''),
+        ]);
+        if (a) victorInfo = a;
+        if (b) pipuPersonality = b;
+    } catch {}
+}
+
+// ── Storage keys ──────────────────────────────────────────────────────────
+const LS_BG  = 'pipu_bg';
+const LS_ST  = 'pipu_state';
+const LS_BLK = 'pipu_blocked';
+
+// ── Image assets ──────────────────────────────────────────────────────────
 const A = {
-    body:          'DESIGN/corpo/corpo%20padrao.png',
-    nose:          'DESIGN/corpo/nariz%20padrao.png',
-    eyes_neutral:  'DESIGN/olhos/padrao.png',
-    eyes_happy:    'DESIGN/olhos/sorrindo.png',
-    eyes_sad:      'DESIGN/olhos/tristes.png',
-    eyes_shocked:  'DESIGN/olhos/arregalados.png',
-    eyes_closed:   'DESIGN/olhos/fechados.png',
-    mouth_closed:  'DESIGN/boca/boca%20padrao.png',
-    mouth_open:    'DESIGN/boca/sorriso.png',
-    mouth_shock:   'DESIGN/boca/boca%20inesperado.png',
+    body:         'DESIGN/corpo/corpo%20padrao.png',
+    nose:         'DESIGN/corpo/nariz%20padrao.png',
+    eyes_neutral: 'DESIGN/olhos/padrao.png',
+    eyes_happy:   'DESIGN/olhos/sorrindo.png',
+    eyes_sad:     'DESIGN/olhos/tristes.png',
+    eyes_shocked: 'DESIGN/olhos/arregalados.png',
+    eyes_closed:  'DESIGN/olhos/fechados.png',
+    mouth_closed: 'DESIGN/boca/boca%20padrao.png',
+    mouth_open:   'DESIGN/boca/sorriso.png',
+    mouth_shock:  'DESIGN/boca/boca%20inesperado.png',
 };
-
-const DEFAULT_ASSETS = {
+const DA = {
     neutral:  { body:A.body, nose:A.nose, eyes_open:A.eyes_neutral, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
     happy:    { body:A.body, nose:A.nose, eyes_open:A.eyes_happy,   eyes_closed:A.eyes_closed, mouth_closed:A.mouth_open,   mouth_open:A.mouth_open,   expression:'', blush:'' },
     sad:      { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'', blush:'' },
@@ -350,38 +338,23 @@ const DEFAULT_ASSETS = {
     vergonha: { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
 };
 
-// ── embedded key (ofuscação leve — a proteção real é a restrição de domínio no Google Cloud) ──
-// Para gerar o teu valor: no browser, corre:  btoa('SUA-API-KEY-AQUI')
-// e cola o resultado entre as aspas abaixo.
-const _k = [
-    'QUl6YVN5Qy16THZnT',
-    'zZLSTFFUnRNaVRnVE',
-    'RPd293QlB1VEM5Q3kw',
-];
-function _getKey() {
-    try { const e = _k.join(''); return e ? atob(e) : ''; } catch { return ''; }
-}
-
-// ── state ──────────────────────────────────────────────────────────────────
-let apiKey      = localStorage.getItem(LS_KEY) || _getKey();
-let personality = localStorage.getItem(LS_PERS) || '';
-let bgColor     = localStorage.getItem(LS_BG)   || '#176580';
-let isTyping    = false;
-let isBlinking  = false;
-let isBlocked   = localStorage.getItem(LS_BLK) === 'true';
-let curEmo      = 'neutral';
-let audioCtx    = null;
-let pipActive   = false;
-let chatVisible = true;
+// ── State ─────────────────────────────────────────────────────────────────
+let bgColor    = localStorage.getItem(LS_BG)  || '#176580';
+let isTyping   = false;
+let isBlinking = false;
+let isBlocked  = localStorage.getItem(LS_BLK) === 'true';
+let curEmo     = 'neutral';
+let audioCtx   = null;
+let pipActive  = false;
+let screenStream = null;
+let visionTimer  = null;
 
 let persona = (() => {
-    try {
-        const s = localStorage.getItem(LS_ST);
-        return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_ASSETS));
-    } catch { return JSON.parse(JSON.stringify(DEFAULT_ASSETS)); }
+    try { const s = localStorage.getItem(LS_ST); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DA)); }
+    catch { return JSON.parse(JSON.stringify(DA)); }
 })();
 
-// ── DOM ────────────────────────────────────────────────────────────────────
+// ── DOM ───────────────────────────────────────────────────────────────────
 const L = {
     body:  document.getElementById('l-body'),
     nose:  document.getElementById('l-nose'),
@@ -390,13 +363,13 @@ const L = {
     expr:  document.getElementById('l-expr'),
     blush: document.getElementById('l-blush'),
 };
-const $inp     = document.getElementById('inp');
-const $msgs    = document.getElementById('msgs');
-const $speech  = document.getElementById('speech');
-const $stxt    = document.getElementById('speech-txt');
-const $chat    = document.getElementById('chat');
+const $inp    = document.getElementById('inp');
+const $msgs   = document.getElementById('msgs');
+const $speech = document.getElementById('speech');
+const $stxt   = document.getElementById('speech-txt');
+const $chat   = document.getElementById('chat');
 
-// ── Expression system ──────────────────────────────────────────────────────
+// ── Expressions ───────────────────────────────────────────────────────────
 function setExpr(emo, talking = false) {
     curEmo = emo;
     const e = persona[emo] || persona.neutral;
@@ -404,24 +377,19 @@ function setExpr(emo, talking = false) {
     setSrc(L.nose,  e.nose);
     setSrc(L.eyes,  isBlinking ? e.eyes_closed : e.eyes_open);
     setSrc(L.mouth, talking ? e.mouth_open : e.mouth_closed);
-    if (e.expression) { L.expr.style.display = ''; setSrc(L.expr, e.expression); }
-    else L.expr.style.display = 'none';
-    if (e.blush) { L.blush.style.display = ''; setSrc(L.blush, e.blush); }
-    else L.blush.style.display = 'none';
+    if (e.expression) { L.expr.style.display=''; setSrc(L.expr, e.expression); } else L.expr.style.display='none';
+    if (e.blush)      { L.blush.style.display=''; setSrc(L.blush, e.blush); }   else L.blush.style.display='none';
 }
-
 function setSrc(img, src) {
     if (!src || img._cur === src) return;
-    img._cur = src;
-    img.src  = src;
+    img._cur = src; img.src = src;
 }
 
-// ── Blink ──────────────────────────────────────────────────────────────────
+// ── Blink ─────────────────────────────────────────────────────────────────
 function scheduleBlink() {
     setTimeout(() => {
         if (!isTyping && !isBlocked && !isBlinking) {
-            isBlinking = true;
-            setExpr(curEmo, false);
+            isBlinking = true; setExpr(curEmo, false);
             setTimeout(() => { isBlinking = false; setExpr(curEmo, isTyping); }, 140);
         }
         scheduleBlink();
@@ -429,7 +397,7 @@ function scheduleBlink() {
 }
 scheduleBlink();
 
-// ── Audio ──────────────────────────────────────────────────────────────────
+// ── Audio ─────────────────────────────────────────────────────────────────
 function initAudio() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -437,9 +405,7 @@ function initAudio() {
 function chirp() {
     try {
         initAudio();
-        const now = audioCtx.currentTime;
-        const osc  = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.value = [760,810,860,910,960,1020][Math.floor(Math.random()*6)];
         gain.gain.setValueAtTime(0.012, now);
@@ -449,22 +415,23 @@ function chirp() {
     } catch {}
 }
 
-// ── Speak / typing animation ───────────────────────────────────────────────
+// ── Speak — boca aberta FIXA durante a fala ───────────────────────────────
 function speak(msg) {
     isTyping = true;
     $stxt.textContent = '';
     $speech.classList.remove('off');
+    // Abre a boca imediatamente e mantém aberta durante toda a fala
+    setExpr(msg.emotion, true);
     const text = msg.text;
     let i = 0;
     function step() {
         if (i < text.length) {
             $stxt.textContent += text[i++];
-            if (i % 2 === 0) { chirp(); setExpr(msg.emotion, true); }
-            else setExpr(msg.emotion, false);
+            if (i % 3 === 0) chirp();
             setTimeout(step, 18 + Math.random() * 22);
         } else {
             isTyping = false;
-            setExpr(msg.emotion, false);
+            setExpr(msg.emotion, false); // fecha boca só quando termina
             addBubble('her', text);
             setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, 4500);
         }
@@ -472,86 +439,61 @@ function speak(msg) {
     step();
 }
 
-// ── Chat bubbles ───────────────────────────────────────────────────────────
+// ── Chat bubbles ──────────────────────────────────────────────────────────
 function addBubble(who, text) {
     const d = document.createElement('div');
-    d.className = (who === 'her'
-        ? 'bubble-her self-start'
-        : 'bubble-user self-end')
+    d.className = (who === 'her' ? 'bubble-her self-start' : 'bubble-user self-end')
         + ' px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm fade-up';
     d.textContent = text;
     $msgs.appendChild(d);
     $msgs.scrollTop = $msgs.scrollHeight;
 }
 
-// ── Local knowledge base ───────────────────────────────────────────────────
+// ── Knowledge base ────────────────────────────────────────────────────────
 const DB = [
-    { kw:['victor','criador','dono','quem é','portfolio'],  emotion:'happy',    text:'O Victor é o meu criador! Ele é desenvolvedor, especialista em pixel art, JavaScript e interfaces IA! 🧑‍💻' },
-    { kw:['github','git','projeto','código','repositório'], emotion:'happy',    text:'Os projetos do Victor estão no GitHub! Clica no ícone do dock!' },
-    { kw:['instagram','insta'],                             emotion:'vergonha', text:'Podes ver as artes do Victor no Instagram! O link está no dock! 📸' },
-    { kw:['spotify','música','musica','playlist'],          emotion:'sono',     text:'O Victor adora programar ouvindo música no Spotify! 🎵' },
-    { kw:['linda','fofa','te amo','gatinha','perfeita'],    emotion:'vergonha', text:'Aww... isso me deixa corada! Obrigada... Hihi! 😳' },
-    { kw:['oi','olá','ola','eae','hey','bom dia','boa tarde'], emotion:'happy', text:'Pipu pipu! Olá! Como posso ajudar hoje? 💛' },
-    { kw:['obrigad','valeu','thanks'],                      emotion:'happy',    text:'De nada! Fico feliz em ajudar! ✨' },
-    { kw:['tchau','xau','até logo','adeus'],                emotion:'sad',      text:'Até logo! Vem conversar comigo quando quiser! 👋' },
+    { kw:['victor','criador','dono','quem é','quem e','portfolio','delts','delta'], emotion:'happy',    text:'O Victor é o meu criador! Também conhecido como Delts ou Delta — desenvolvedor apaixonado por pixel art, IA e interfaces criativas! 🧑‍💻' },
+    { kw:['github','git','projeto','código','repositório'],                         emotion:'happy',    text:'Os projetos do Victor estão em github.com/Delta-1 — vai lá ver! 🚀' },
+    { kw:['instagram','insta','@'],                                                 emotion:'vergonha', text:'O Instagram do Victor é @V_ctorsz! Segue ele lá! 📸' },
+    { kw:['spotify','música','musica','playlist','ouvindo'],                        emotion:'sono',     text:'O Victor adora programar ouvindo música! Vê o widget do Spotify no canto! 🎵' },
+    { kw:['linda','fofa','te amo','gatinha','perfeita','bonita','gata'],            emotion:'happy',    text:'Awww! Que fofa! Isso me deixa super feliz! Obrigada! 😊✨' },
+    { kw:['oi','olá','ola','eae','hey','bom dia','boa tarde','boa noite'],          emotion:'happy',    text:'Pipu pipu! Olá! Como posso ajudar hoje? 💛' },
+    { kw:['obrigad','valeu','thanks'],                                              emotion:'happy',    text:'De nada! Fico feliz em ajudar! ✨' },
+    { kw:['tchau','xau','até logo','adeus'],                                        emotion:'sad',      text:'Até logo! Vem conversar comigo quando quiser! 👋' },
+    { kw:['pipu','você é','voce e','quem é você','quem és'],                       emotion:'happy',    text:'Sou a Pipu! Assistente virtual e portfólio vivo do Victor! Fui criada com muito carinho! 💛' },
 ];
-
 const TOXIC = ['idiota','burra','odeio','bosta','merda','caralho','puta','lixo','feio','feia'];
 
-// ── Process user message ───────────────────────────────────────────────────
+// ── Process message ───────────────────────────────────────────────────────
 async function process(text) {
     const t = text.toLowerCase().trim();
-
     if (isBlocked) { speak({ emotion:'brava', text:'Acesso bloqueado! 🔒' }); return; }
-
     if (TOXIC.some(w => t.includes(w))) {
-        isBlocked = true;
-        localStorage.setItem(LS_BLK, 'true');
-        $inp.disabled = true;
-        $inp.placeholder = '🔒 Bloqueado';
-        speak({ emotion:'brava', text:'Não gostei disso! Bye bye! 💢' });
-        return;
+        isBlocked = true; localStorage.setItem(LS_BLK,'true');
+        $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado';
+        speak({ emotion:'brava', text:'Não gostei disso! Bye bye! 💢' }); return;
     }
-
-    if (apiKey) {
-        $stxt.textContent = 'Pensando... ✨';
-        $speech.classList.remove('off');
-        try {
-            const reply = await callGemini(text);
-            speak(reply);
-            return;
-        } catch (err) {
-            $speech.classList.add('off');
-            isTyping = false;
-        }
+    const key = _getKey();
+    if (key) {
+        $stxt.textContent = 'Pensando... ✨'; $speech.classList.remove('off');
+        try { const r = await callGemini(text, key); speak(r); return; }
+        catch (e) { $speech.classList.add('off'); isTyping = false; }
     }
-
-    for (const item of DB) {
-        if (item.kw.some(k => t.includes(k))) { speak(item); return; }
-    }
-
-    speak({ emotion:'neutral', text:'Podes perguntar-me sobre o Victor ou configurar a API Gemini nas definições! ⚙️' });
+    for (const item of DB) { if (item.kw.some(k => t.includes(k))) { speak(item); return; } }
+    speak({ emotion:'neutral', text:'Podes perguntar-me sobre o Victor, os projetos dele ou qualquer coisa! 😊' });
 }
 
-// ── Gemini API ─────────────────────────────────────────────────────────────
-async function callGemini(query) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-    const sys  = personality
-        ? `Você é a Pipu, assistente fofa do Victor. Responda em pt-BR. ${personality}\nSempre retorne JSON: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"..."}`
-        : `Você é a Pipu, assistente virtual fofa e carismática criada pelo desenvolvedor Victor. Responda em português do Brasil de forma alegre. Sempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+// ── Gemini API ────────────────────────────────────────────────────────────
+async function callGemini(query, key, imageBase64 = null) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+    const sys = `${pipuPersonality}\n\n${victorInfo}\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+    const parts = [{ text: query }];
+    if (imageBase64) parts.push({ inline_data:{ mime_type:'image/jpeg', data:imageBase64 } });
     const body = {
-        contents: [{ parts:[{ text:query }] }],
+        contents: [{ parts }],
         systemInstruction: { parts:[{ text:sys }] },
         generationConfig: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type:'OBJECT',
-                properties: {
-                    emotion:{ type:'STRING', enum:['neutral','happy','sad','brava','shocked','sono','vergonha'] },
-                    text:   { type:'STRING' }
-                },
-                required:['emotion','text']
-            }
+            responseMimeType:'application/json',
+            responseSchema:{ type:'OBJECT', properties:{ emotion:{type:'STRING',enum:['neutral','happy','sad','brava','shocked','sono','vergonha']}, text:{type:'STRING'} }, required:['emotion','text'] }
         }
     };
     const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
@@ -560,28 +502,21 @@ async function callGemini(query) {
     return JSON.parse(data.candidates[0].content.parts[0].text);
 }
 
-// ── Submit ─────────────────────────────────────────────────────────────────
+// ── Submit ────────────────────────────────────────────────────────────────
 async function submit() {
     const text = $inp.value.trim();
     if (!text || isTyping) return;
-    $inp.value = '';
-    initAudio();
+    $inp.value = ''; initAudio();
     addBubble('user', text);
     isTyping = true;
     setTimeout(() => { isTyping = false; process(text); }, 280);
 }
-
 document.getElementById('btn-send').addEventListener('click', submit);
 $inp.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
+function quickAsk(q) { if (isTyping || isBlocked) return; $inp.value = q; submit(); }
 
-function quickAsk(q) {
-    if (isTyping || isBlocked) return;
-    $inp.value = q;
-    submit();
-}
-
-// ── Avatar click ───────────────────────────────────────────────────────────
-const CLICK_REPLIES = [
+// ── Avatar click ──────────────────────────────────────────────────────────
+const CLICKS = [
     { emotion:'shocked',  text:'Ei! Fizeste-me cócegas! 😲' },
     { emotion:'vergonha', text:'Ahh! Fico envergonhada! 😳' },
     { emotion:'happy',    text:'Hihi! Pipu pipu! ✨' },
@@ -589,134 +524,183 @@ const CLICK_REPLIES = [
 ];
 function avatarClick() {
     if (isTyping || isBlocked) return;
-    initAudio();
-    speak(CLICK_REPLIES[Math.floor(Math.random() * CLICK_REPLIES.length)]);
+    initAudio(); speak(CLICKS[Math.floor(Math.random() * CLICKS.length)]);
 }
 
-// ── Chat show/hide ─────────────────────────────────────────────────────────
+// ── Microphone (Web Speech API) ───────────────────────────────────────────
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, micOn = false;
+const $btnMic = document.getElementById('btn-mic');
+
+if (SpeechRec) {
+    rec = new SpeechRec();
+    rec.lang = 'pt-BR';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = e => {
+        const text = e.results[0][0].transcript;
+        micOn = false; $btnMic.classList.remove('mic-active');
+        $inp.value = text; submit();
+    };
+    rec.onerror = () => { micOn = false; $btnMic.classList.remove('mic-active'); };
+    rec.onend   = () => { micOn = false; $btnMic.classList.remove('mic-active'); };
+
+    $btnMic.addEventListener('click', () => {
+        initAudio();
+        if (micOn) { rec.stop(); }
+        else { micOn = true; $btnMic.classList.add('mic-active'); rec.start(); }
+    });
+} else {
+    $btnMic.title = 'Microfone não suportado neste browser';
+    $btnMic.style.opacity = '0.3';
+}
+
+// ── Screen Vision (Pipu vê o ecrã) ───────────────────────────────────────
+const $btnVision = document.getElementById('btn-vision');
+const $screenV   = document.getElementById('screen-v');
+const $screenC   = document.getElementById('screen-c');
+const screenCtx  = $screenC.getContext('2d');
+
+$btnVision.addEventListener('click', async () => {
+    initAudio();
+    if (screenStream) {
+        // Desligar
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null; clearInterval(visionTimer);
+        $btnVision.classList.remove('text-yellow-300');
+        speak({ emotion:'sad', text:'Parei de ver o teu ecrã! 👋' });
+        return;
+    }
+    try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video:{ width:1280, height:720 }, audio:false });
+        $screenV.srcObject = screenStream;
+        await $screenV.play();
+        $screenC.width = 640; $screenC.height = 360;
+        $btnVision.classList.add('text-yellow-300');
+        speak({ emotion:'happy', text:'Ativei o modo visão! Estou a ver o teu ecrã! Diz-me o que devo comentar! 👀' });
+        // Comenta automaticamente a cada 20 segundos
+        visionTimer = setInterval(analyzeScreen, 20000);
+        // Para quando o utilizador fecha a partilha
+        screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+            screenStream = null; clearInterval(visionTimer);
+            $btnVision.classList.remove('text-yellow-300');
+        });
+    } catch { speak({ emotion:'sad', text:'Não consegui aceder ao ecrã... 😢' }); }
+});
+
+async function analyzeScreen() {
+    if (!screenStream || isTyping) return;
+    const key = _getKey(); if (!key) return;
+    screenCtx.drawImage($screenV, 0, 0, 640, 360);
+    const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
+    try {
+        const r = await callGemini('Comente brevemente de forma fofa e descontraída o que estás a ver nesta imagem do ecrã do utilizador.', key, b64);
+        speak(r);
+    } catch {}
+}
+
+// Botão "O que estás a ver?" via input
+const _origProcess = process;
+
+// ── Chat show/hide ────────────────────────────────────────────────────────
 function showChat(on) {
-    chatVisible = on;
-    $chat.style.opacity   = on ? '1' : '0';
-    $chat.style.transform = on ? 'scale(1)' : 'scale(0.94)';
+    $chat.style.opacity    = on ? '1' : '0';
+    $chat.style.transform  = on ? 'scale(1)' : 'scale(.94)';
     $chat.style.pointerEvents = on ? '' : 'none';
 }
-$chat.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
 
-// ── Drag chat window ───────────────────────────────────────────────────────
-(function() {
-    const el = $chat, hdr = document.getElementById('chat-hdr');
+// ── Drag chat ─────────────────────────────────────────────────────────────
+(function(){
+    const hdr = document.getElementById('chat-hdr');
     let mx=0, my=0;
     hdr.addEventListener('mousedown', e => {
         if (e.target.closest('button')) return;
-        mx = e.clientX; my = e.clientY;
-        function drag(e) {
-            const dx = mx - e.clientX, dy = my - e.clientY;
-            mx = e.clientX; my = e.clientY;
-            el.style.top   = Math.max(0, el.offsetTop  - dy) + 'px';
-            el.style.left  = Math.max(0, el.offsetLeft - dx) + 'px';
-            el.style.right = 'auto';
+        mx=e.clientX; my=e.clientY;
+        function drag(e){
+            const dx=mx-e.clientX, dy=my-e.clientY; mx=e.clientX; my=e.clientY;
+            $chat.style.top  = Math.max(0, $chat.offsetTop  - dy)+'px';
+            $chat.style.left = Math.max(0, $chat.offsetLeft - dx)+'px';
+            $chat.style.right='auto';
         }
         document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', () => document.removeEventListener('mousemove', drag), { once:true });
+        document.addEventListener('mouseup', ()=>document.removeEventListener('mousemove', drag), {once:true});
     });
 })();
 
-// ── Password modal ─────────────────────────────────────────────────────────
+// ── Spotify ───────────────────────────────────────────────────────────────
+function toggleSpotify() {
+    const w = document.getElementById('spotify-widget');
+    w.classList.toggle('off');
+}
+
+// ── Password modal ────────────────────────────────────────────────────────
 document.getElementById('btn-cfg').addEventListener('click', () => {
-    const m = document.getElementById('pw-modal');
-    m.style.display = 'flex';
+    document.getElementById('pw-modal').style.display = 'flex';
     document.getElementById('pw-inp').value = '';
     document.getElementById('pw-err').style.opacity = '0';
     setTimeout(() => document.getElementById('pw-inp').focus(), 50);
 });
-function closePw() { document.getElementById('pw-modal').style.display = 'none'; }
+function closePw() { document.getElementById('pw-modal').style.display='none'; }
 function checkPw() {
-    if (document.getElementById('pw-inp').value === '1qaz2wsx') {
-        closePw(); openCfg();
-    } else {
-        document.getElementById('pw-err').style.opacity = '1';
-        document.getElementById('pw-inp').value = '';
-        document.getElementById('pw-inp').focus();
-    }
+    if (document.getElementById('pw-inp').value === '1qaz2wsx') { closePw(); openCfg(); }
+    else { document.getElementById('pw-err').style.opacity='1'; document.getElementById('pw-inp').value=''; document.getElementById('pw-inp').focus(); }
 }
 document.getElementById('pw-inp').addEventListener('keypress', e => { if (e.key==='Enter') checkPw(); });
 
-// ── Settings modal ─────────────────────────────────────────────────────────
+// ── Settings modal ────────────────────────────────────────────────────────
 function openCfg() {
     initAudio();
-    document.getElementById('inp-api').value   = apiKey;
-    document.getElementById('inp-pers').value  = personality;
     document.getElementById('inp-color').value = bgColor;
     refreshUploadUI();
-    const m = document.getElementById('cfg-modal');
-    m.style.display = 'flex';
-    switchTab('brain');
+    document.getElementById('cfg-modal').style.display = 'flex';
+    switchTab('visual');
 }
-function closeCfg() { document.getElementById('cfg-modal').style.display = 'none'; }
-function saveCfg() {
-    apiKey      = document.getElementById('inp-api').value.trim();
-    personality = document.getElementById('inp-pers').value.trim();
-    localStorage.setItem(LS_KEY,  apiKey);
-    localStorage.setItem(LS_PERS, personality);
-    closeCfg();
-    speak({ emotion:'happy', text:'Configurações guardadas com sucesso! ✅' });
-}
+function closeCfg() { document.getElementById('cfg-modal').style.display='none'; }
+function saveCfg()  { closeCfg(); speak({ emotion:'happy', text:'Configurações guardadas! ✅' }); }
 function switchTab(t) {
-    document.getElementById('tab-brain').classList.toggle('hidden', t !== 'brain');
-    document.getElementById('tab-persona').classList.toggle('hidden', t !== 'persona');
-    document.getElementById('t-brain').className   = 'py-3 transition-colors ' + (t==='brain'   ? 'tab-on' : 'tab-off');
-    document.getElementById('t-persona').className = 'py-3 transition-colors ' + (t==='persona' ? 'tab-on' : 'tab-off');
+    document.getElementById('tab-visual').classList.toggle('hidden', t!=='visual');
+    document.getElementById('tab-persona').classList.toggle('hidden', t!=='persona');
+    document.getElementById('t-visual').className  = 'py-3 transition-colors '+(t==='visual'  ?'tab-on':'tab-off');
+    document.getElementById('t-persona').className = 'py-3 transition-colors '+(t==='persona'?'tab-on':'tab-off');
 }
 
-// ── Background color ───────────────────────────────────────────────────────
+// ── Background ────────────────────────────────────────────────────────────
 function setBg(c) {
-    bgColor = c;
-    document.body.style.backgroundColor = c;
-    const el = document.getElementById('inp-color');
-    if (el) el.value = c;
+    bgColor = c; document.body.style.backgroundColor = c;
+    const el = document.getElementById('inp-color'); if (el) el.value = c;
     localStorage.setItem(LS_BG, c);
 }
 document.getElementById('inp-color').addEventListener('input', e => setBg(e.target.value));
 
-// ── Upload system ──────────────────────────────────────────────────────────
+// ── Upload system ─────────────────────────────────────────────────────────
 const SLOTS = ['body','nose','eyes_open','eyes_closed','mouth_closed','mouth_open','expression','blush'];
-
 function uploadSlot(event, slot) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
         const emo = document.getElementById('emo-sel').value;
-        if (!persona[emo]) persona[emo] = { ...DEFAULT_ASSETS[emo] };
+        if (!persona[emo]) persona[emo] = { ...DA[emo] };
         persona[emo][slot] = ev.target.result;
         try { localStorage.setItem(LS_ST, JSON.stringify(persona)); } catch { alert('Memória cheia!'); }
-        setExpr(curEmo, isTyping);
-        refreshUploadUI();
+        setExpr(curEmo, isTyping); refreshUploadUI();
     };
     reader.readAsDataURL(file);
 }
-
 function refreshUploadUI() {
     const emo = document.getElementById('emo-sel').value;
-    const e   = persona[emo] || DEFAULT_ASSETS[emo];
+    const e = persona[emo] || DA[emo];
     SLOTS.forEach(s => {
-        const lbl = document.getElementById('lbl-' + s);
-        if (!lbl) return;
-        const val  = e[s];
-        const name = lbl.dataset.name || s;
-        const has  = val && val.startsWith('data:');
-        lbl.className = 'upload-btn' + (has ? ' ok' : '');
-        lbl.firstChild.textContent = name + (has ? ' ✓' : '');
+        const lbl = document.getElementById('lbl-'+s); if (!lbl) return;
+        const has = e[s] && e[s].startsWith('data:');
+        lbl.className = 'upload-btn'+(has?' ok':'');
+        lbl.firstChild.textContent = (lbl.dataset.name||s) + (has?' ✓':'');
     });
 }
-
 function clearUploads() {
-    persona = JSON.parse(JSON.stringify(DEFAULT_ASSETS));
+    persona = JSON.parse(JSON.stringify(DA));
     localStorage.setItem(LS_ST, JSON.stringify(persona));
-    setExpr(curEmo, isTyping);
-    refreshUploadUI();
+    setExpr(curEmo, isTyping); refreshUploadUI();
 }
-
 async function onFolderInput(e) { await batchFiles(Array.from(e.target.files)); }
 async function onDrop(e) {
     e.preventDefault();
@@ -740,72 +724,64 @@ async function walkDir(entry) {
 async function batchFiles(files) {
     let n = 0;
     await Promise.all(files.map(f => new Promise(res => {
-        const p = (f.webkitRelativePath || f.name).toLowerCase();
+        const p = (f.webkitRelativePath||f.name).toLowerCase();
         if (!/\.(png|svg|jpg|jpeg)$/.test(p)) { res(); return; }
         const rd = new FileReader();
         rd.onload = ev => { if (mapFile(p, ev.target.result)) n++; res(); };
         rd.readAsDataURL(f);
     })));
     localStorage.setItem(LS_ST, JSON.stringify(persona));
-    setExpr(curEmo, isTyping);
-    refreshUploadUI();
+    setExpr(curEmo, isTyping); refreshUploadUI();
     speak({ emotion:'happy', text:`Importei ${n} ficheiro(s)! 🎨` });
 }
 function mapFile(p, data) {
-    const has = (...w) => w.some(x => p.includes(x));
-    let ok = false;
-    if (has('corpo') && !has('olho','boca','nariz')) { Object.values(persona).forEach(e => e.body=data); ok=true; }
-    if (has('nariz')) { Object.values(persona).forEach(e => e.nose=data); ok=true; }
+    const has = (...w) => w.some(x => p.includes(x)); let ok=false;
+    if (has('corpo') && !has('olho','boca','nariz')) { Object.values(persona).forEach(e=>e.body=data); ok=true; }
+    if (has('nariz')) { Object.values(persona).forEach(e=>e.nose=data); ok=true; }
     if (has('olho','eye')) {
-        if      (has('sorri','feliz','happy'))          { persona.happy.eyes_open=data; ok=true; }
-        else if (has('arregal','shock','surpresa'))     { persona.shocked.eyes_open=data; ok=true; }
-        else if (has('trist','sad'))                    { ['sad','brava','sono','vergonha'].forEach(k=>persona[k].eyes_open=data); ok=true; }
-        else if (has('fechad','closed','blink'))        { Object.values(persona).forEach(e=>e.eyes_closed=data); ok=true; }
-        else                                            { persona.neutral.eyes_open=data; ok=true; }
+        if (has('sorri','feliz','happy'))       { persona.happy.eyes_open=data; ok=true; }
+        else if (has('arregal','shock'))        { persona.shocked.eyes_open=data; ok=true; }
+        else if (has('trist','sad'))            { ['sad','brava','sono','vergonha'].forEach(k=>persona[k].eyes_open=data); ok=true; }
+        else if (has('fechad','closed','blink')){ Object.values(persona).forEach(e=>e.eyes_closed=data); ok=true; }
+        else { persona.neutral.eyes_open=data; ok=true; }
     }
     if (has('boca','mouth')) {
-        if      (has('sorri','sorriso','happy'))        { ['happy'].forEach(k=>{persona[k].mouth_closed=persona[k].mouth_open=data;}); ok=true; }
-        else if (has('inespe','shock','brava'))         { ['shocked','brava'].forEach(k=>{persona[k].mouth_closed=persona[k].mouth_open=data;}); ok=true; }
-        else                                            { ['neutral','sad','sono','vergonha'].forEach(k=>persona[k].mouth_closed=data); ok=true; }
+        if (has('sorri','sorriso','happy'))  { persona.happy.mouth_closed=persona.happy.mouth_open=data; ok=true; }
+        else if (has('inespe','shock','brava')) { ['shocked','brava'].forEach(k=>{persona[k].mouth_closed=persona[k].mouth_open=data;}); ok=true; }
+        else { ['neutral','sad','sono','vergonha'].forEach(k=>persona[k].mouth_closed=data); ok=true; }
     }
     if (has('blush','envergon')) { persona.vergonha.blush=data; ok=true; }
     return ok;
 }
 
-// ── Picture-in-Picture ─────────────────────────────────────────────────────
-const pipC   = document.getElementById('pip-c');
-const pipV   = document.getElementById('pip-v');
+// ── PiP ──────────────────────────────────────────────────────────────────
+const pipC = document.getElementById('pip-c'), pipV = document.getElementById('pip-v');
 const pipCtx = pipC.getContext('2d');
 try { pipV.srcObject = pipC.captureStream(24); pipV.play(); } catch {}
-
 function drawPip() {
     if (!pipActive) return;
-    pipCtx.fillStyle = bgColor;
-    pipCtx.fillRect(0, 0, pipC.width, pipC.height);
-    [L.body, L.nose, L.eyes, L.mouth].forEach(img => {
-        if (img.complete && img.naturalWidth) pipCtx.drawImage(img, 0, 0, pipC.width, pipC.height);
-    });
+    pipCtx.fillStyle = bgColor; pipCtx.fillRect(0,0,pipC.width,pipC.height);
+    [L.body,L.nose,L.eyes,L.mouth].forEach(img=>{ if(img.complete&&img.naturalWidth) pipCtx.drawImage(img,0,0,pipC.width,pipC.height); });
     requestAnimationFrame(drawPip);
 }
 document.getElementById('btn-pip').addEventListener('click', async () => {
     initAudio();
     try {
-        if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture(); pipActive = false;
-        } else {
-            pipActive = true; drawPip();
-            await pipV.requestPictureInPicture();
-        }
-    } catch { pipActive = false; }
+        if (document.pictureInPictureElement) { await document.exitPictureInPicture(); pipActive=false; }
+        else { pipActive=true; drawPip(); await pipV.requestPictureInPicture(); }
+    } catch { pipActive=false; }
 });
 
-// ── Boot ───────────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────────
 document.body.style.backgroundColor = bgColor;
 setExpr('neutral');
-if (isBlocked) { $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado'; }
+if (isBlocked) { $inp.disabled=true; $inp.placeholder='🔒 Bloqueado'; }
+
+// Carrega personalidade dos ficheiros do GitHub
+loadPersonalityFiles();
 
 setTimeout(() => {
-    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu! Podes falar comigo ou clicar em mim! 💛' });
+    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu, assistente do Victor (Delts)! Podes falar comigo ou clicar em mim! 💛' });
 }, 900);
 </script>
 </body>
