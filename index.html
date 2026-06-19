@@ -43,7 +43,7 @@ input[type="file"] { display:none; }
 <body id="body" style="background:#176580;color:white;">
 
 <!-- PiP plumbing -->
-<canvas id="pip-c" width="400" height="600" class="hidden" style="position:absolute"></canvas>
+<canvas id="pip-c" width="400" height="400" class="hidden" style="position:absolute"></canvas>
 <video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
 
 <!-- Screen capture (hidden) -->
@@ -479,13 +479,13 @@ async function process(text) {
         catch (e) { $speech.classList.add('off'); isTyping = false; }
     }
     for (const item of DB) { if (item.kw.some(k => t.includes(k))) { speak(item); return; } }
-    speak({ emotion:'neutral', text:'Podes perguntar-me sobre o Victor, os projetos dele ou qualquer coisa! 😊' });
+    speak({ emotion:'happy', text:'Hmm, não tenho certeza sobre isso! Mas pode me perguntar sobre o Victor, os projetos dele no GitHub, ou qualquer coisa! ✨' });
 }
 
 // ── Gemini API ────────────────────────────────────────────────────────────
 async function callGemini(query, key, imageBase64 = null) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-    const sys = `${pipuPersonality}\n\n${victorInfo}\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+    const sys = `${pipuPersonality}\n\n${victorInfo}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE a pergunta diretamente. Nunca diga "você pode me perguntar sobre X" — apenas responda.\n- Use as informações acima para responder perguntas sobre o Victor, seus projetos, suas redes sociais, ou qualquer outro assunto.\n- Se não souber algo específico, responda de forma criativa e fofa mas sem redirecionar.\n- Seja direta, animada e concisa (máx 2 frases).\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
     const parts = [{ text: query }];
     if (imageBase64) parts.push({ inline_data:{ mime_type:'image/jpeg', data:imageBase64 } });
     const body = {
