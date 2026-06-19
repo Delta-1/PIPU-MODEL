@@ -703,21 +703,27 @@ $inp.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
 function quickAsk(q) { if (isTyping || isBlocked) return; $inp.value = q; submit(); }
 
 // ── Avatar click → ativa microfone ────────────────────────────────────────
+const TOUCH_RESPONSES = [
+    { emotion:'neutral', text:'sim? 👀' },
+    { emotion:'neutral', text:'pq tá me tocando? 🤔' },
+    { emotion:'neutral', text:'oi? tô te ouvindo! 👂' },
+    { emotion:'neutral', text:'sim, pode falar! 😊' },
+];
 function avatarClick() {
     if (isBlocked) return;
     initAudio();
     if (isTyping) {
-        speak({ emotion:'neutral', text:'pq está me tocando? 🤔' });
+        // Ela já está falando — leve reclamação, sem ativar mic
+        speak({ emotion:'neutral', text:'ei! deixa eu terminar! 😄' });
         return;
     }
-    speak({ emotion:'neutral', text:'sim? 😊' });
-    // Ativa o mic após a Pipu terminar de falar
+    // Resposta curiosa aleatória, depois ativa o mic
+    speak(TOUCH_RESPONSES[Math.floor(Math.random() * TOUCH_RESPONSES.length)]);
     setTimeout(() => {
         if (isTyping || micOn) return;
         if (rec) {
             micOn = true; $btnMic.classList.add('mic-active');
             try { rec.start(); } catch {}
-            // Sincroniza botão mobile
             mobMicOn = true;
             const mb = document.getElementById('mob-mic-btn');
             if (mb) { mb.classList.add('mic-ring','bg-red-500'); mb.classList.remove('bg-yellow-400'); }
