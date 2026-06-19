@@ -350,8 +350,20 @@ const DEFAULT_ASSETS = {
     vergonha: { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
 };
 
+// ── embedded key (ofuscação leve — a proteção real é a restrição de domínio no Google Cloud) ──
+// Para gerar o teu valor: no browser, corre:  btoa('SUA-API-KEY-AQUI')
+// e cola o resultado entre as aspas abaixo.
+const _k = [
+    'QUl6YVN5Qy16THZnT',
+    'zZLSTFFUnRNaVRnVE',
+    'RPd293QlB1VEM5Q3kw',
+];
+function _getKey() {
+    try { const e = _k.join(''); return e ? atob(e) : ''; } catch { return ''; }
+}
+
 // ── state ──────────────────────────────────────────────────────────────────
-let apiKey      = localStorage.getItem(LS_KEY)  || '';
+let apiKey      = localStorage.getItem(LS_KEY) || _getKey();
 let personality = localStorage.getItem(LS_PERS) || '';
 let bgColor     = localStorage.getItem(LS_BG)   || '#176580';
 let isTyping    = false;
