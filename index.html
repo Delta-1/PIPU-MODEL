@@ -40,6 +40,24 @@ input[type="file"] { display:none; }
 #music-widget.off { opacity:0; pointer-events:none; transform:translateY(8px); }
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
 .now-dot { animation:pulse-dot 1s ease infinite; }
+
+/* ── Mobile ── */
+@media (max-width:640px) {
+    #chat {
+        top: 0.75rem !important; left: 0.75rem !important;
+        right: 0.75rem !important; width: auto !important;
+        height: 32vh !important; min-height: 160px !important;
+        resize: none !important;
+    }
+    #music-widget {
+        left: 0.75rem !important; right: 0.75rem !important;
+        bottom: 5.5rem !important; width: auto !important;
+    }
+    #speech { bottom: 50vh !important; max-width: 88vw !important; left: 50% !important; transform: translateX(-50%) !important; }
+    #char   { height: 82vh !important; }
+    .dock-quick { display: none !important; }
+    #dock-inner { gap: 0.5rem !important; }
+}
 </style>
 </head>
 <body id="body" style="background:#176580;color:white;">
@@ -96,7 +114,7 @@ input[type="file"] { display:none; }
 </div>
 
 <!-- ── LAST.FM WIDGET ── -->
-<div id="music-widget" class="off absolute z-30 pointer-events-auto" style="bottom:6rem;right:1.25rem;width:288px;">
+<div id="music-widget" class="absolute z-30 pointer-events-auto" style="bottom:6rem;right:1.25rem;width:288px;">
     <div class="glass rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
         <div class="flex items-center gap-2 px-3 py-2.5" style="background:rgba(200,30,30,.18);">
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="#d40000"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 19.5c-4.136 0-7.5-3.364-7.5-7.5S7.864 4.5 12 4.5s7.5 3.364 7.5 7.5-3.364 7.5-7.5 7.5zm-1.5-4.5l4.5-3-4.5-3v6z"/><path d="M10.5 8.25v7.5l6-3.75z"/><circle cx="12" cy="12" r="2.5"/></svg>
@@ -116,7 +134,7 @@ input[type="file"] { display:none; }
 
 <!-- ── DOCK ── -->
 <div class="absolute bottom-5 left-0 right-0 flex justify-center px-4 z-30 pointer-events-none">
-    <div class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2 w-full max-w-2xl border border-white/10 shadow-2xl">
+    <div id="dock-inner" class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2 w-full max-w-2xl border border-white/10 shadow-2xl">
 
         <div class="flex-1 flex items-center gap-1 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
             <input id="inp" type="text" autocomplete="off"
@@ -151,7 +169,7 @@ input[type="file"] { display:none; }
         </button>
 
         <!-- Quick actions -->
-        <div class="flex gap-1 shrink-0">
+        <div class="dock-quick flex gap-1 shrink-0">
             <button onclick="quickAsk('Quem é o Victor?')" class="dock-btn" title="Sobre Victor">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </button>
@@ -484,7 +502,7 @@ async function process(text) {
 // ── Gemini API ────────────────────────────────────────────────────────────
 async function callGemini(query, key, imageBase64 = null) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-    const sys = `${pipuPersonality}\n\n${victorInfo}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE a pergunta diretamente. Nunca diga "você pode me perguntar sobre X" — apenas responda.\n- Use as informações acima para responder perguntas sobre o Victor, seus projetos, suas redes sociais, ou qualquer outro assunto.\n- Se não souber algo específico, responda de forma criativa e fofa mas sem redirecionar.\n- Seja direta, animada e concisa (máx 2 frases).\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+    const sys = `${pipuPersonality}\n\n${victorInfo}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você pode conversar sobre QUALQUER coisa: piadas, curiosidades, perguntas bobas, assuntos aleatórios — entre no clima!\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para perguntas técnicas ou gerais: responda de forma descontraída e precisa.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Nunca force o assunto do portfólio se a conversa for sobre outra coisa.\n- Respostas curtas e naturais (máx 2 frases). Sem listas, sem formalidade.\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
     const parts = [{ text: query }];
     if (imageBase64) parts.push({ inline_data:{ mime_type:'image/jpeg', data:imageBase64 } });
     const body = {
@@ -672,15 +690,8 @@ function renderLastFm(tracks) {
 
 function toggleMusic(forceClose) {
     const w = document.getElementById('music-widget');
-    const willOpen = forceClose === false ? false : w.classList.contains('off');
-    w.classList.toggle('off', !willOpen);
-    if (willOpen) {
-        fetchLastFm();
-        clearInterval(lastfmTimer);
-        lastfmTimer = setInterval(fetchLastFm, 30000);
-    } else {
-        clearInterval(lastfmTimer);
-    }
+    if (forceClose === false) { w.classList.add('off'); return; }
+    w.classList.toggle('off');
 }
 
 // ── Password modal ────────────────────────────────────────────────────────
@@ -822,16 +833,44 @@ document.getElementById('btn-pip').addEventListener('click', async () => {
     } catch { pipActive=false; }
 });
 
+// ── Proactive chat ────────────────────────────────────────────────────────
+const STARTERS = [
+    { emotion:'happy',    text:'Ei! Tô aqui se quiser bater um papo! 😄' },
+    { emotion:'sono',     text:'Hmm... tô aqui pensando em nada. E você, o que tá fazendo? 🤔' },
+    { emotion:'happy',    text:'Peep bop! Me faz uma pergunta aleatória, aceito qualquer desafio! ✨' },
+    { emotion:'vergonha', text:'Posso contar um segredo? Às vezes eu fico aqui piscando à toa... 😳' },
+    { emotion:'happy',    text:'Oi oi! Você sumiu um pouquinho! Tava com saudade 💛' },
+    { emotion:'shocked',  text:'ESPERA. Você sabia que o Victor fez tudo isso? Que talento! 🤩' },
+    { emotion:'sono',     text:'Tô com preguiça hoje... você também? 😴' },
+    { emotion:'happy',    text:'Me conta uma coisa interessante! Qualquer coisa mesmo 🎲' },
+    { emotion:'happy',    text:'Curiosidade: qual foi a última música que você ouviu? 🎵' },
+    { emotion:'vergonha', text:'Tô aqui fingindo que trabalho mas só tô esperando você falar comigo 🙈' },
+];
+let lastInteraction = Date.now();
+$inp.addEventListener('input', () => { lastInteraction = Date.now(); });
+function scheduleStarter() {
+    const delay = (100 + Math.random() * 100) * 1000; // 100–200s
+    setTimeout(() => {
+        const idle = Date.now() - lastInteraction > 90000; // 90s sem digitar
+        if (!isTyping && !isBlocked && idle && document.visibilityState === 'visible') {
+            speak(STARTERS[Math.floor(Math.random() * STARTERS.length)]);
+        }
+        scheduleStarter();
+    }, delay);
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 document.body.style.backgroundColor = bgColor;
 setExpr('neutral');
 if (isBlocked) { $inp.disabled=true; $inp.placeholder='🔒 Bloqueado'; }
 
-// Carrega personalidade dos ficheiros do GitHub
 loadPersonalityFiles();
+fetchLastFm();
+lastfmTimer = setInterval(fetchLastFm, 30000);
+scheduleStarter();
 
 setTimeout(() => {
-    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu, assistente do Victor (Delts)! Podes falar comigo ou clicar em mim! 💛' });
+    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu, assistente do Victor (Delts)! Fala comigo sobre qualquer coisa! 💛' });
 }, 900);
 </script>
 </body>
