@@ -129,19 +129,38 @@ input[type="file"] { display:none; }
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <!-- YouTube player embutido -->
-        <div id="yt-wrap" class="hidden">
-            <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
-                <iframe id="yt-player"
-                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block;"
-                    src="" allow="autoplay; encrypted-media; fullscreen"
-                    allowfullscreen></iframe>
+        <!-- Player de áudio -->
+        <div id="audio-player" class="hidden border-b border-white/5">
+            <!-- Info da música -->
+            <div class="flex items-center gap-2.5 px-3 pt-2.5 pb-1.5">
+                <img id="pl-art" src="" alt="" class="w-11 h-11 rounded-xl object-cover shrink-0" style="background:rgba(255,255,255,.07)">
+                <div class="flex-1 min-w-0">
+                    <p id="pl-name"   class="text-xs font-bold text-white truncate"></p>
+                    <p id="pl-artist" class="text-[10px] text-white/45 truncate"></p>
+                </div>
+                <button onclick="closePlayer()" class="text-white/25 hover:text-white/70 transition-colors text-sm ml-1">✕</button>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-black/25 border-b border-white/5">
-                <svg class="w-3 h-3 text-red-400 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                <span id="yt-title" class="text-[10px] text-white/50 truncate flex-1"></span>
-                <button onclick="closeYtPlayer()" class="text-white/30 hover:text-white/80 text-xs transition-colors shrink-0">✕</button>
+            <!-- Controles -->
+            <div class="flex items-center gap-2.5 px-3 pb-1.5">
+                <button id="pl-btn" onclick="toggleAudio()"
+                        class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all shrink-0">
+                    <svg id="pl-icon" class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <input id="pl-seek" type="range" min="0" max="30" value="0" step="0.1"
+                       class="flex-1 accent-yellow-400" style="height:3px;cursor:pointer;"
+                       oninput="seekAudio(this.value)">
+                <span id="pl-time" class="text-[9px] text-white/35 font-mono w-8 text-right shrink-0">0:30</span>
             </div>
+            <!-- Preview + Spotify -->
+            <div class="flex items-center px-3 pb-2.5">
+                <span id="pl-status" class="text-[9px] text-white/25">prévia 30s</span>
+                <a id="pl-spotify" href="#" target="_blank"
+                   class="ml-auto flex items-center gap-1 text-[10px] text-green-400 hover:text-green-300 font-bold transition-colors">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                    Spotify ↗
+                </a>
+            </div>
+            <audio id="pl-audio" preload="none"></audio>
         </div>
         <div id="lastfm-tracks" class="p-2 space-y-0.5">
             <div class="px-2 py-3 text-center text-xs text-white/30">Carregando...</div>
@@ -765,29 +784,89 @@ function renderLastFm(tracks) {
             </button>
         `;
         c.appendChild(row);
-        // Auto-carrega (sem autoplay) a primeira música
-        if (!autoPlayed) { autoPlayed = true; setYtPlayer(name, artist, false); }
+        // Auto-carrega a primeira música no player (sem autoplay ainda)
+        if (!autoPlayed) { autoPlayed = true; playTrack(name, artist, img); }
     });
 }
 
-function playTrack(name, artist) {
-    const q = encodeURIComponent(`${name} ${artist}`);
-    document.getElementById('yt-player').src = `https://www.youtube.com/embed?listType=search&list=${q}&autoplay=1&controls=1`;
-    document.getElementById('yt-title').textContent = `${name} — ${artist}`;
-    document.getElementById('yt-wrap').classList.remove('hidden');
+const $plAudio = () => document.getElementById('pl-audio');
+
+async function playTrack(name, artist, art = '') {
+    // Preenche info visual
+    const imgEl = document.getElementById('pl-art');
+    imgEl.src = art;
+    imgEl.onerror = () => imgEl.style.visibility = 'hidden';
+    imgEl.onload  = () => imgEl.style.visibility = '';
+    document.getElementById('pl-name').textContent   = name;
+    document.getElementById('pl-artist').textContent = artist;
+    document.getElementById('pl-spotify').href =
+        `https://open.spotify.com/search/${encodeURIComponent(name + ' ' + artist)}`;
+    document.getElementById('audio-player').classList.remove('hidden');
+    document.getElementById('pl-status').textContent = 'buscando...';
+    resetPlayerUI();
+
+    const audio = $plAudio();
+    audio.pause(); audio.src = '';
+
+    try {
+        const q   = encodeURIComponent(`${name} ${artist}`);
+        const res = await fetch(`https://api.deezer.com/search?q=${q}&limit=1`);
+        const d   = await res.json();
+        const preview = d.data?.[0]?.preview;
+        if (preview) {
+            audio.src = preview;
+            audio.load();
+            audio.play().catch(() => {});
+            document.getElementById('pl-status').textContent = 'prévia 30s';
+        } else {
+            document.getElementById('pl-status').textContent = 'sem prévia';
+        }
+    } catch {
+        document.getElementById('pl-status').textContent = '↗ abre no Spotify';
+    }
 }
 
-function setYtPlayer(name, artist, autoplay = false) {
-    const q = encodeURIComponent(`${name} ${artist}`);
-    document.getElementById('yt-player').src = `https://www.youtube.com/embed?listType=search&list=${q}&autoplay=${autoplay?1:0}&controls=1`;
-    document.getElementById('yt-title').textContent = `${name} — ${artist}`;
-    document.getElementById('yt-wrap').classList.remove('hidden');
+function closePlayer() {
+    const audio = $plAudio();
+    audio.pause(); audio.src = '';
+    document.getElementById('audio-player').classList.add('hidden');
+    resetPlayerUI();
 }
 
-function closeYtPlayer() {
-    document.getElementById('yt-player').src = '';
-    document.getElementById('yt-wrap').classList.add('hidden');
+function resetPlayerUI() {
+    document.getElementById('pl-seek').value = 0;
+    document.getElementById('pl-time').textContent = '0:30';
+    document.getElementById('pl-icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
 }
+
+function toggleAudio() {
+    const audio = $plAudio();
+    if (!audio.src) return;
+    if (audio.paused) { audio.play(); }
+    else { audio.pause(); }
+}
+
+function seekAudio(val) {
+    const audio = $plAudio();
+    if (audio.src) audio.currentTime = val;
+}
+
+// Eventos do player
+document.addEventListener('DOMContentLoaded', () => {
+    const audio = document.getElementById('pl-audio');
+    if (!audio) return;
+    audio.addEventListener('timeupdate', () => {
+        const seek = document.getElementById('pl-seek');
+        const time = document.getElementById('pl-time');
+        seek.value = audio.currentTime;
+        seek.max   = audio.duration || 30;
+        const rem  = Math.max(0, (audio.duration || 30) - audio.currentTime);
+        time.textContent = `0:${String(Math.ceil(rem)).padStart(2,'0')}`;
+    });
+    audio.addEventListener('play',  () => { document.getElementById('pl-icon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'; });
+    audio.addEventListener('pause', () => { document.getElementById('pl-icon').innerHTML = '<path d="M8 5v14l11-7z"/>'; });
+    audio.addEventListener('ended', resetPlayerUI);
+});
 
 function toggleMusic(forceClose) {
     const w = document.getElementById('music-widget');
