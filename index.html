@@ -79,6 +79,15 @@ input[type="file"] { display:none; }
 </head>
 <body id="body" style="background:#176580;color:white;">
 
+<!-- ADM badge (canto superior esquerdo, só aparece no modo admin) -->
+<div id="adm-badge" class="hidden fixed top-4 left-4 z-50 pointer-events-none select-none">
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold tracking-widest"
+         style="color:#fcd34d;background:rgba(8,18,36,.7);border-color:rgba(252,211,77,.25);backdrop-filter:blur(10px);">
+        <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 now-dot inline-block"></span>
+        ADM:ON
+    </div>
+</div>
+
 <!-- PiP plumbing -->
 <canvas id="pip-c" width="400" height="400" class="hidden" style="position:absolute"></canvas>
 <video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
@@ -443,6 +452,8 @@ Personalidade da Pipu:
 
 let victorInfo = VICTOR_FALLBACK;
 let pipuPersonality = PIPU_FALLBACK;
+let _lastTracksKey = '';
+let _lastFirstTrack = '';
 
 async function loadPersonalityFiles() {
     const base = 'https://raw.githubusercontent.com/Delta-1/PIPU-MODEL/main/';
@@ -659,7 +670,7 @@ async function process(text) {
 async function callGemini(query, key, imageBase64 = null) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
     const victorMode = isVictor
-        ? '\n\nMODO ESPECIAL ATIVO: O próprio Victor (Delts) está aqui! Chame-o de "Delts", seja extra animada, íntima e brincalhona com ele — como uma melhor amiga. Pode zoar ele por ter te criado, fazer piadas internas, ser mais solta do que com visitantes normais.'
+        ? '\n\nMODO ADMIN ATIVO — MODO LIVRE: O Victor (Delts), teu criador, está logado. REGRAS DO MODO LIVRE: sem filtros, sem restrições de tema, pode falar qualquer coisa, fazer piadas sem censura, ser completamente espontânea e até um pouco caótica. Trate-o como seu melhor amigo com quem você pode falar absolutamente tudo. Chame-o de "Delts". Aproveite que é ele!'
         : '';
     const sys = `${pipuPersonality}\n\n${victorInfo}${victorMode}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você pode conversar sobre QUALQUER coisa: piadas, curiosidades, perguntas bobas, assuntos aleatórios — entre no clima!\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para perguntas técnicas ou gerais: responda de forma descontraída e precisa.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Nunca force o assunto do portfólio se a conversa for sobre outra coisa.\n- Respostas curtas e naturais (máx 2 frases). Sem listas, sem formalidade.\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
     const parts = [{ text: query }];
@@ -835,6 +846,13 @@ async function fetchLastFm() {
 function renderLastFm(tracks) {
     const c = document.getElementById('lastfm-tracks');
     if (!tracks || !tracks.length) { c.innerHTML = '<div class="px-2 py-3 text-center text-xs text-white/30">Nenhuma música ainda</div>'; return; }
+    // Só reconstrói o DOM se a lista mudou — evita o "refresh" visual
+    const key = tracks.slice(0,5).map(t=>`${t.name}|${t.artist?.['#text']}|${t['@attr']?.nowplaying||''}`).join(',');
+    const firstTrack = `${tracks[0]?.name}|${tracks[0]?.artist?.['#text']}`;
+    const listChanged = key !== _lastTracksKey;
+    const firstChanged = firstTrack !== _lastFirstTrack;
+    if (!listChanged && !firstChanged) return; // nada mudou, não faz nada
+    _lastTracksKey = key;
     c.innerHTML = '';
     let autoPlayed = false;
     tracks.slice(0, 5).forEach(t => {
@@ -861,8 +879,11 @@ function renderLastFm(tracks) {
             </button>
         `;
         c.appendChild(row);
-        // Auto-carrega a primeira música no player (sem autoplay ainda)
-        if (!autoPlayed) { autoPlayed = true; playTrack(name, artist, img); }
+        // Auto-carrega só se a primeira música mudou
+        if (!autoPlayed) {
+            autoPlayed = true;
+            if (firstChanged) { _lastFirstTrack = firstTrack; playTrack(name, artist, img); }
+        }
     });
 }
 
@@ -973,11 +994,12 @@ function checkPw() {
         closePw();
         if (!isVictor) {
             isVictor = true;
+            document.getElementById('adm-badge').classList.remove('hidden');
             speak({ emotion:'shocked', text:'ESPERA— DELTS?! EI VICTOR!! Que surpresa!! 🥳🎉' });
-            setTimeout(() => { if (!isTyping) speak({ emotion:'happy', text:'Meu criador chegou!! Tô toda animada agora!! 💛✨' }); }, 4800);
+            setTimeout(() => { if (!isTyping) speak({ emotion:'estrela', text:'MODO LIVRE ATIVADO!! Agora posso falar tudo mesmo!! 💛✨' }); }, 4800);
             setTimeout(openCfg, 5200);
         } else {
-            speak({ emotion:'happy', text:'Oi de novo, Delts! 💛' });
+            speak({ emotion:'happy', text:'Oi de novo, Delts! Modo livre on~ 💛' });
             setTimeout(openCfg, 1200);
         }
     } else {
