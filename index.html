@@ -1,1413 +1,800 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pipu — Assistente Virtual de Victor</title>
-    <!-- Tailwind CSS para estilização moderna -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts para tipografia premium -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Rubik+Mono+One&display=swap" rel="stylesheet">
-    
-    <script>
-        // Tratamento inteligente de carregamento para as camadas de imagem
-        function handleImageError(imageElement) {
-            if (!imageElement.src || imageElement.src.startsWith('data:') || imageElement.src === window.location.href) {
-                return;
-            }
-            console.warn(`Atenção: Camada de design não encontrada no caminho local: ${imageElement.src}`);
-            imageElement.classList.add('hidden');
-            
-            // Ativa o avatar de fallback caso a imagem principal do corpo falhe e não haja corpo_padrao
-            if (imageElement.id === 'layer-body') {
-                const fallback = document.getElementById('pipu-fallback-vector');
-                if (fallback) fallback.classList.remove('hidden');
-                const loader = document.getElementById('pipu-loader');
-                if (loader) loader.classList.add('hidden');
-            }
-        }
-
-        function handleImageLoad(imageElement) {
-            imageElement.classList.remove('hidden');
-            imageElement.classList.remove('opacity-0');
-            const loader = document.getElementById('pipu-loader');
-            if (loader) loader.classList.add('hidden');
-            
-            // Oculta o fallback se a imagem real carregar com sucesso
-            if (imageElement.id === 'layer-body') {
-                const fallback = document.getElementById('pipu-fallback-vector');
-                if (fallback) fallback.classList.add('hidden');
-            }
-        }
-    </script>
-
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Outfit', sans-serif;
-            user-select: none;
-            transition: background-color 0.5s ease;
-        }
-
-        /* Vidro Fosco de Alta Fidelidade (Mac/Sigma Style) */
-        .glass-premium {
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .glass-dock {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(35px);
-            -webkit-backdrop-filter: blur(35px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4);
-        }
-
-        .glass-bubble {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1.5px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Balão de fala estilo HQ com cauda indicadora */
-        .speech-bubble-tail {
-            position: absolute;
-            bottom: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-top: 12px solid rgba(255, 255, 255, 0.15);
-        }
-
-        /* Respiração natural sem flutuar a personagem para fora do ecrã */
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.015); }
-        }
-
-        .animate-pipu-breathe {
-            animation: breathe 5s ease-in-out infinite;
-            will-change: transform;
-            transform-origin: bottom center;
-        }
-
-        .settings-scale {
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-        }
-
-        .custom-scroll::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        .custom-scroll::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 99px;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Inputs de ficheiro ocultos estilo Veadotube */
-        input[type="file"] {
-            display: none;
-        }
-        .file-upload-label {
-            display: inline-block;
-            padding: 6px 10px;
-            cursor: pointer;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            font-size: 11px;
-            text-align: center;
-            transition: all 0.2s;
-            width: 100%;
-        }
-        .file-upload-label:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: #f5cc3c;
-        }
-        .has-file {
-            background: rgba(52, 211, 153, 0.12) !important;
-            border-color: #34d399 !important;
-            color: #34d399;
-        }
-
-        .tab-btn-active {
-            border-bottom: 2px solid #f5cc3c;
-            color: #f5cc3c;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipu</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+    user-select: none;
+    transition: background-color 0.5s ease;
+}
+.glass {
+    background: rgba(8, 18, 36, 0.5);
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.glass-light {
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.bubble-her  { background:#f1f0f0; color:#1a1a2e; border-radius:18px 18px 18px 4px; }
+.bubble-user { background:#2563eb; color:#fff;    border-radius:18px 18px 4px 18px; }
+.scroll::-webkit-scrollbar { width: 4px; }
+.scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius:99px; }
+.scroll::-webkit-scrollbar-track { background: transparent; }
+input[type="file"] { display: none; }
+@keyframes breathe { 0%,100%{transform:scaleY(1) translateY(0)} 50%{transform:scaleY(1.013) translateY(-5px)} }
+@keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spinSlow{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.breathe    { animation: breathe 5s ease-in-out infinite; transform-origin: bottom center; }
+.fade-up    { animation: fadeUp 0.28s ease forwards; }
+.spin-slow  { animation: spinSlow 4s linear infinite; }
+.char-img {
+    position:absolute; bottom:0; left:0;
+    width:100%; height:100%;
+    object-fit: contain; object-position: bottom center;
+    pointer-events: none; -webkit-user-drag: none;
+}
+#speech {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#speech.off { opacity:0; pointer-events:none; transform:translateY(8px); }
+.upload-btn {
+    display:block; padding:7px 10px; cursor:pointer; text-align:center;
+    background:rgba(255,255,255,0.04); border:1px dashed rgba(255,255,255,0.18);
+    border-radius:8px; font-size:10px; font-family:monospace;
+    color:rgba(255,255,255,0.65); transition:all 0.2s;
+}
+.upload-btn:hover { background:rgba(255,255,255,0.1); border-color:#fcd34d; }
+.upload-btn.ok    { background:rgba(52,211,153,0.12); border-color:#34d399; color:#34d399; }
+.tab-on  { color:#fcd34d; border-bottom:2px solid #fcd34d; }
+.tab-off { color:rgba(255,255,255,0.45); border-bottom:2px solid transparent; }
+.tab-off:hover { color:rgba(255,255,255,0.8); }
+</style>
 </head>
-<body id="site-body" class="relative h-screen w-screen flex flex-col justify-between text-white z-0" style="background-color: #176580;">
+<body id="body" style="background:#176580; color:white;">
 
-    <!-- Elementos Ocultos para o Modo Flutuante (Picture-in-Picture) -->
-    <canvas id="pipu-pip-canvas" width="400" height="400" class="hidden"></canvas>
-    <video id="pipu-pip-video" autoplay muted playsinline class="hidden"></video>
+<!-- PiP plumbing -->
+<canvas id="pip-c" width="400" height="600" class="hidden" style="position:absolute"></canvas>
+<video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
 
-    <!-- Indicador de Status de Conexão no Canto Superior Esquerdo -->
-    <div class="absolute top-6 left-6 z-20 select-none pointer-events-auto">
-        <span id="diagnostic-badge" class="px-3 py-1.5 bg-black/35 text-xs font-mono rounded-full border border-white/5 flex items-center gap-2" title="Mecanismo de Carregamento Local">
-            <span id="diagnostic-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span id="diagnostic-text" class="text-white/80">Sincronizando Arte Local...</span>
-        </span>
-    </div>
+<!-- ── LOGO ── -->
+<div class="absolute top-5 left-6 z-30 pointer-events-none">
+    <span style="font-family:'Press Start 2P',monospace;font-size:20px;color:#fcd34d;
+                 text-shadow:3px 3px 0 #92400e,-1px -1px 0 #b45309;">PIPU</span>
+</div>
 
-    <!-- JANELA DE CONVERSA MÓVEL E REDIMENSIONÁVEL (Canto Superior Direito) -->
-    <div id="draggable-chat" class="absolute top-6 right-6 w-[350px] min-w-[280px] min-h-[300px] max-w-[90vw] max-h-[70vh] h-[45vh] glass-premium rounded-2xl shadow-2xl flex flex-col overflow-hidden resize both pointer-events-auto z-20 border border-white/10 transition-all duration-300" style="resize: both; overflow: hidden;">
-        <!-- Cabeçalho de Arrastar -->
-        <div id="draggable-chat-header" class="bg-slate-900/40 px-4 py-3 border-b border-white/5 flex justify-between items-center select-none cursor-move shrink-0">
-            <div class="flex items-center space-x-2">
-                <span class="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer hover:scale-105 active:scale-95 transition-transform" onclick="toggleChatWindow(false)" title="Ocultar Chat"></span>
-                <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-                <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
-            </div>
-            <span class="text-xs font-semibold tracking-wide opacity-80 select-none">MENSAGENS</span>
-            <div class="w-12"></div>
-        </div>
-        <!-- Área de Rolagem do Histórico -->
-        <div id="chat-history-scroll" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll bg-slate-950/15 flex flex-col">
-            <!-- Balão Inicial -->
-            <div class="self-start bg-gray-200 text-gray-800 rounded-2xl rounded-tl-none px-3.5 py-2 text-xs md:text-sm max-w-[85%] shadow-sm font-medium leading-relaxed">
-                Olá! Eu sou a Pipu, a assistente oficial do <strong>Victor</strong>! Podes falar comigo por aqui ou perguntar sobre os projetos dele. 😊
-            </div>
-            <!-- Exemplo de Diálogo Pré-programado -->
-            <div class="self-end bg-blue-500 text-white rounded-2xl rounded-tr-none px-3.5 py-2 text-xs md:text-sm max-w-[85%] shadow-sm font-medium leading-relaxed">
-                Quem é o Victor?
-            </div>
-            <div class="self-start bg-gray-200 text-gray-800 rounded-2xl rounded-tl-none px-3.5 py-2 text-xs md:text-sm max-w-[85%] shadow-sm font-medium leading-relaxed">
-                O Victor é o meu criador! Ele é um desenvolvedor focado em programação de alta performance, pixel art, animações simétricas e interfaces de IA! 🧑‍💻
-            </div>
+<!-- ── CHARACTER ── -->
+<div class="absolute inset-0 z-0 flex items-end justify-center overflow-hidden pointer-events-none">
+
+    <!-- speech bubble -->
+    <div id="speech" class="off absolute z-20 pointer-events-none"
+         style="bottom:62vh; left:50%; transform:translateX(-50%); max-width:min(460px,86vw);">
+        <div class="glass-light rounded-2xl px-5 py-3.5 text-center shadow-xl relative">
+            <p id="speech-txt" class="text-sm leading-relaxed text-white font-medium break-words"></p>
+            <div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+                 width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;
+                 border-top:10px solid rgba(255,255,255,0.1);"></div>
         </div>
     </div>
 
-    <!-- ÁREA CENTRAL: AVATAR DA PIPU (Sempre atrás da UI) -->
-    <div class="absolute inset-0 z-0 pointer-events-none flex justify-center items-end overflow-hidden">
-        
-        <!-- Balão de Fala Dinâmico -->
-        <div id="active-speech-bubble" class="absolute bottom-[65vh] max-w-[85%] md:max-w-[460px] z-30 transition-all duration-300 opacity-0 transform translate-y-4 pointer-events-none">
-            <div class="relative glass-bubble rounded-3xl p-5 text-center">
-                <p id="speech-text" class="text-xs md:text-sm leading-relaxed text-white font-medium pr-1 whitespace-pre-wrap break-words tracking-wide"></p>
-                <div class="speech-bubble-tail"></div>
-            </div>
+    <!-- layers -->
+    <div id="char" class="breathe pointer-events-auto cursor-pointer"
+         style="position:relative;width:100%;height:90vh;"
+         onclick="avatarClick()">
+        <img id="l-body"  class="char-img" alt="">
+        <img id="l-nose"  class="char-img" alt="">
+        <img id="l-eyes"  class="char-img" alt="">
+        <img id="l-mouth" class="char-img" alt="">
+        <img id="l-expr"  class="char-img" alt="" style="display:none">
+        <img id="l-blush" class="char-img" alt="" style="display:none">
+    </div>
+</div>
+
+<!-- ── CHAT WINDOW ── -->
+<div id="chat"
+     class="absolute top-5 right-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10"
+     style="width:330px;height:44vh;min-width:260px;min-height:250px;resize:both;overflow:hidden;
+            transition:opacity 0.25s ease,transform 0.25s ease;">
+
+    <div id="chat-hdr"
+         class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move shrink-0 select-none"
+         style="background:rgba(0,0,0,0.18);">
+        <div class="flex gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-red-500/80 cursor-pointer"
+                  onclick="showChat(false)" title="Fechar"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
         </div>
-
-        <!-- Avatar Animado da Pipu -->
-        <div class="relative w-full h-[95vh] md:h-screen flex items-end justify-center pointer-events-auto cursor-pointer animate-pipu-breathe" id="pipu-character-box">
-            
-            <div id="pipu-loader" class="absolute inset-0 flex items-center justify-center z-30">
-                <div class="w-8 h-8 border-4 border-yellow-300 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-
-            <!-- Fallback Vector caso as imagens falhem -->
-            <svg id="pipu-fallback-vector" class="absolute bottom-0 w-[240px] sm:w-[320px] md:w-[420px] h-auto hidden max-h-[75vh]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 65C15 35 30 15 50 15C70 15 85 35 85 65C85 70 80 75 75 75C70 75 65 70 50 70C35 70 30 75 25 75C20 75 15 70 15 65Z" fill="#1b4965"/>
-                <path d="M25 85C25 70 35 60 50 60C65 60 75 70 75 85V100H25V85Z" fill="#f5cc3c"/>
-                <path d="M42 60H58V70H42V60Z" fill="#ffe3e0"/>
-                <circle cx="50" cy="45" r="22" fill="#ffe3e0"/>
-                <ellipse id="fallback-blush-l" cx="35" cy="48" rx="4" ry="2" fill="#ffb3c1" class="opacity-0"/>
-                <ellipse id="fallback-blush-r" cx="65" cy="48" rx="4" ry="2" fill="#ffb3c1" class="opacity-0"/>
-                <circle id="fallback-eye-l" cx="38" cy="42" r="3.5" fill="#1b4965"/>
-                <circle id="fallback-eye-r" cx="62" cy="42" r="3.5" fill="#1b4965"/>
-                <path d="M49 46.5L51 46.5L50 48L49 46.5Z" fill="#e07a5f"/>
-                <path id="fallback-mouth" d="M46 51Q50 54 54 51" stroke="#1b4965" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                <path d="M26 35C35 25 45 30 50 32C55 30 65 25 74 35C78 40 78 50 78 50C78 50 74 42 68 45C62 48 58 40 50 42C42 40 38 48 32 45C26 42 22 50 22 50C22 50 22 40 26 35Z" fill="#1d3557"/>
-            </svg>
-
-            <!-- Camadas de Imagem (Carregadas dinamicamente) -->
-            <img id="layer-body" src="" alt="Corpo" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_15px_35px_rgba(0,0,0,0.3)] transition-opacity duration-300 opacity-0" onload="handleImageLoad(this)" onerror="handleImageError(this)">
-            <img id="layer-nose" src="" alt="Nariz" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none transition-opacity duration-300 opacity-0" onload="handleImageLoad(this)" onerror="handleImageError(this)">
-            <img id="layer-eyes" src="" alt="Olhos" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none transition-opacity duration-300 opacity-0 transition-transform duration-100" onload="handleImageLoad(this)" onerror="handleImageError(this)" style="transform-origin: center 52%;">
-            <img id="layer-mouth" src="" alt="Boca" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none transition-opacity duration-300 opacity-0 transition-transform duration-100" onload="handleImageLoad(this)" onerror="handleImageError(this)" style="transform-origin: center 57%;">
-            <img id="layer-expression" src="" alt="Expressão" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none hidden transition-all duration-200" onload="handleImageLoad(this)" onerror="handleImageError(this)">
-            <img id="layer-blush" src="" alt="Blush" class="absolute bottom-0 w-full h-full object-contain object-bottom select-none pointer-events-none hidden transition-all duration-200" onload="handleImageLoad(this)" onerror="handleImageError(this)">
-
-        </div>
+        <span class="text-[11px] font-semibold text-white/60 tracking-widest uppercase">Mensagens</span>
+        <div class="w-12"></div>
     </div>
 
-    <!-- DOCK E BARRA DE MENSAGENS (Fixo no fundo da tela) -->
-    <div class="absolute bottom-6 left-0 right-0 px-4 md:px-8 z-40 pointer-events-none flex justify-center">
-        <div class="w-full max-w-5xl glass-dock p-2.5 md:p-3 rounded-3xl border border-white/10 pointer-events-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            
-            <!-- Caixa de Entrada Principal (À Esquerda) -->
-            <div class="flex-1 w-full flex items-center space-x-2 bg-black/30 px-4 py-2 rounded-2xl border border-white/5">
-                <input type="text" id="user-input" class="flex-1 bg-transparent border-0 outline-none ring-0 text-white placeholder-white/30 py-1 text-sm md:text-base font-normal tracking-wide" placeholder="Conversa com a Pipu..." autocomplete="off">
-                
-                <!-- Botão de Configuração (Senha Secreta Protegida) -->
-                <button id="btn-settings-toggle" class="p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all text-white/50 hover:text-white" title="Definições do Estúdio">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 1 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-
-                <!-- Botão PiP integrado -->
-                <button id="btn-pip" class="p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all text-white/50 hover:text-white" title="Picture-in-Picture">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M14 10h7v7h-7z"/></svg>
-                </button>
-
-                <!-- Botão para Mostrar/Ocultar Chat -->
-                <button id="btn-chat-toggle" class="p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all text-white/50 hover:text-white text-yellow-300" title="Mostrar/Ocultar Janela de Chat">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </button>
-
-                <!-- Botão Enviar -->
-                <button id="btn-send" class="w-9 h-9 bg-white/10 hover:bg-yellow-300 hover:text-slate-900 active:scale-90 text-white rounded-xl flex items-center justify-center transition-all shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="19" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                </button>
-            </div>
-
-            <!-- Botões de Atalho no Canto Direito (Mac Dock Style) -->
-            <div class="flex items-center gap-1 shrink-0 bg-white/5 p-1.5 rounded-2xl border border-white/5">
-                <button onclick="sendQuickQuestion('Quem é o Victor?')" class="p-2.5 rounded-xl hover:bg-white/10 hover:text-yellow-300 transition-all active:scale-90 text-white/70" title="Sobre o Victor">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                </button>
-                <button onclick="window.open('https://github.com/veninja', '_blank')" class="p-2.5 rounded-xl hover:bg-white/10 hover:text-yellow-300 transition-all active:scale-90 text-white/70" title="GitHub de Victor">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-                </button>
-                <button onclick="window.open('https://instagram.com', '_blank')" class="p-2.5 rounded-xl hover:bg-white/10 hover:text-yellow-300 transition-all active:scale-90 text-white/70" title="Instagram de Victor">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-                </button>
-                <button onclick="window.open('https://spotify.com', '_blank')" class="p-2.5 rounded-xl hover:bg-white/10 hover:text-yellow-300 transition-all active:scale-90 text-white/70" title="Spotify de Victor">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
-                </button>
-            </div>
+    <div id="msgs" class="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5 scroll"
+         style="background:rgba(0,0,0,0.08);">
+        <div class="bubble-her self-start px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm">
+            Olá! Sou a <strong>Pipu</strong>, assistente do Victor! 😊
         </div>
     </div>
+</div>
 
-    <!-- MODAL DE SENHA PARA ENTRAR NAS CONFIGURAÇÕES (Senha: 1qaz2wsx) -->
-    <div id="password-modal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 px-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-        <div class="relative glass-bubble rounded-3xl p-6 w-full max-w-sm border border-white/10 z-10 text-center">
-            <h3 class="text-base font-bold text-yellow-300 mb-2 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span>Acesso Restrito</span>
+<!-- ── DOCK ── -->
+<div class="absolute bottom-5 left-0 right-0 flex justify-center px-4 z-30 pointer-events-none">
+    <div class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2
+                w-full max-w-2xl border border-white/10 shadow-2xl">
+
+        <!-- input row -->
+        <div class="flex-1 flex items-center gap-1.5 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
+            <input id="inp" type="text" autocomplete="off"
+                   class="flex-1 bg-transparent outline-none text-white placeholder-white/30 text-sm"
+                   placeholder="Fala com a Pipu...">
+
+            <button onclick="showChat(true)"
+                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-yellow-300 transition-all"
+                    title="Abrir chat">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button id="btn-pip"
+                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-white transition-all"
+                    title="Picture-in-Picture">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M14 10h7v7h-7z"/></svg>
+            </button>
+            <button id="btn-cfg"
+                    class="p-1.5 rounded-lg hover:bg-white/10 text-white/45 hover:text-white transition-all"
+                    title="Configurações">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+
+        <!-- send -->
+        <button id="btn-send"
+                class="w-10 h-10 shrink-0 bg-yellow-400 hover:bg-yellow-300 active:scale-90 text-slate-900
+                       rounded-xl flex items-center justify-center transition-all shadow-md">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
+
+        <!-- quick actions -->
+        <div class="flex gap-1 shrink-0">
+            <button onclick="quickAsk('Quem é o Victor?')"
+                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
+                    title="Sobre Victor">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </button>
+            <button onclick="window.open('https://github.com/Delta-1','_blank')"
+                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
+                    title="GitHub">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+            </button>
+            <button onclick="window.open('https://instagram.com','_blank')"
+                    class="p-2.5 rounded-xl hover:bg-white/10 text-white/45 hover:text-yellow-300 active:scale-90 transition-all"
+                    title="Instagram">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── PASSWORD MODAL ── -->
+<div id="pw-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;">
+    <div class="absolute inset-0 bg-black/60" style="backdrop-filter:blur(8px);" onclick="closePw()"></div>
+    <div class="relative glass-light rounded-2xl p-6 w-80 border border-white/15 z-10 text-center shadow-2xl">
+        <p class="text-yellow-300 font-bold text-sm mb-1">🔐 Acesso Restrito</p>
+        <p class="text-xs text-white/55 mb-4">Palavra-passe do estúdio</p>
+        <input id="pw-inp" type="password" placeholder="Chave de acesso..."
+               class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-center
+                      text-white outline-none focus:border-yellow-400 font-mono mb-1.5 transition-colors">
+        <p id="pw-err" class="text-xs text-red-400 font-bold mb-3 opacity-0 transition-opacity">Senha incorreta</p>
+        <div class="flex gap-2 justify-center">
+            <button onclick="closePw()" class="px-4 py-2 text-xs text-white/50 hover:text-white transition-colors">Cancelar</button>
+            <button onclick="checkPw()"
+                    class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">
+                Entrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div id="cfg-modal" style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;">
+    <div class="absolute inset-0 bg-black/55" style="backdrop-filter:blur(10px);" onclick="closeCfg()"></div>
+    <div class="relative glass rounded-2xl w-full max-w-lg border border-white/10 z-10 shadow-2xl flex flex-col mx-4"
+         style="max-height:85vh;">
+
+        <div class="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+            <h3 class="text-sm font-bold text-yellow-300 flex items-center gap-2">
+                <svg class="w-4 h-4 spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Estúdio Pipu
             </h3>
-            <p class="text-xs text-white/70 mb-4 leading-relaxed font-sans">Introduza a palavra-passe secreta do Victor para aceder ao estúdio de modificações.</p>
-            <input type="password" id="input-modal-password" class="w-full bg-black/25 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-center text-white focus:outline-none focus:border-yellow-300 font-mono mb-2" placeholder="Chave de acesso...">
-            <p id="password-error-msg" class="text-[10px] text-red-400 font-bold mb-4 opacity-0 transition-opacity">Palavra-passe errada! Tente novamente.</p>
-            <div class="flex justify-center space-x-2">
-                <button id="btn-pw-cancel" class="px-4 py-2 rounded-xl text-xs font-bold text-white/50 hover:text-white transition-all">Cancelar</button>
-                <button id="btn-pw-unlock" class="px-5 py-2 rounded-xl text-xs font-bold bg-yellow-400 hover:bg-yellow-300 text-[#0c3040] shadow-md transition-all active:scale-95">Desbloquear</button>
-            </div>
+            <button onclick="closeCfg()" class="text-white/40 hover:text-white p-1 transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-    </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES COM ABAS -->
-    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none settings-scale px-4">
-        <div id="settings-overlay" class="absolute inset-0 bg-black/55 backdrop-blur-md"></div>
-        
-        <div class="relative glass-bubble rounded-3xl p-6 w-full max-w-xl border border-white/10 z-10 flex flex-col h-[85vh] max-h-[640px]">
-            <!-- Título do Painel -->
-            <div class="flex justify-between items-center pb-3 border-b border-white/10 shrink-0">
-                <h3 class="text-base font-bold text-yellow-300 flex items-center gap-2">
-                    <svg class="w-5 h-5 animate-spin-slow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    <span>Configurações Estúdio Pipu</span>
-                </h3>
-                <button id="btn-modal-close" class="text-white/50 hover:text-white transition-all">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        <!-- tabs -->
+        <div class="flex gap-4 px-5 border-b border-white/10 text-xs font-mono shrink-0">
+            <button id="t-brain" onclick="switchTab('brain')" class="py-3 tab-on transition-colors">🧠 IA & VISUAL</button>
+            <button id="t-persona" onclick="switchTab('persona')" class="py-3 tab-off transition-colors">🎨 PERSONA</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto scroll p-5 space-y-4 text-sm">
+
+            <!-- brain tab -->
+            <div id="tab-brain">
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Chave API Gemini</label>
+                    <input id="inp-api" type="password" placeholder="AIza..."
+                           class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white
+                                  outline-none focus:border-yellow-400 font-mono placeholder-white/20 transition-colors">
+                </div>
+                <div class="space-y-1.5 mt-4">
+                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Personalidade</label>
+                    <textarea id="inp-pers" rows="3" placeholder="Como a Pipu deve agir..."
+                              class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white
+                                     outline-none focus:border-yellow-400 placeholder-white/20 resize-none scroll transition-colors"></textarea>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/10 space-y-2">
+                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Cor de Fundo</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" id="inp-color"
+                               class="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent">
+                        <div class="flex gap-2">
+                            <button onclick="setBg('#176580')" class="w-6 h-6 rounded-full bg-[#176580] border-2 border-white/20 hover:scale-110 transition-transform"></button>
+                            <button onclick="setBg('#1a2744')" class="w-6 h-6 rounded-full bg-[#1a2744] border-2 border-white/20 hover:scale-110 transition-transform"></button>
+                            <button onclick="setBg('#2d4a3e')" class="w-6 h-6 rounded-full bg-[#2d4a3e] border-2 border-white/20 hover:scale-110 transition-transform"></button>
+                            <button onclick="setBg('#3d2c5c')" class="w-6 h-6 rounded-full bg-[#3d2c5c] border-2 border-white/20 hover:scale-110 transition-transform"></button>
+                            <button onclick="setBg('#111827')" class="w-6 h-6 rounded-full bg-[#111827] border-2 border-white/20 hover:scale-110 transition-transform"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- persona tab -->
+            <div id="tab-persona" class="hidden space-y-4">
+                <div id="drop-zone"
+                     class="border-2 border-dashed border-white/20 rounded-2xl p-5 text-center cursor-pointer
+                            hover:border-yellow-400 hover:bg-white/5 transition-all"
+                     ondragover="event.preventDefault();this.classList.add('border-yellow-400','bg-white/5')"
+                     ondragleave="this.classList.remove('border-yellow-400','bg-white/5')"
+                     ondrop="onDrop(event)">
+                    <div class="text-3xl mb-1.5">📂</div>
+                    <p class="text-xs font-bold">Arrasta a pasta DESIGN/ aqui</p>
+                    <p class="text-[10px] text-white/40 mt-0.5">ou</p>
+                    <label class="mt-2 inline-block px-3 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-slate-900
+                                  text-[10px] font-bold rounded-lg cursor-pointer transition-all active:scale-95">
+                        Selecionar Pasta
+                        <input type="file" webkitdirectory directory multiple onchange="onFolderInput(event)">
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-white/55 uppercase font-mono">Emoção:</span>
+                    <select id="emo-sel" onchange="refreshUploadUI()"
+                            class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
+                        <option value="neutral">Neutral</option>
+                        <option value="happy">Feliz</option>
+                        <option value="sad">Triste</option>
+                        <option value="brava">Raiva</option>
+                        <option value="shocked">Surpresa</option>
+                        <option value="sono">Sono</option>
+                        <option value="vergonha">Vergonha</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <label id="lbl-body"        class="upload-btn" data-name="Corpo">        Corpo        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'body')"></label>
+                    <label id="lbl-nose"        class="upload-btn" data-name="Nariz">        Nariz        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'nose')"></label>
+                    <label id="lbl-eyes_open"   class="upload-btn" data-name="Olhos Abertos">Olhos Abertos<input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_open')"></label>
+                    <label id="lbl-eyes_closed" class="upload-btn" data-name="Olhos Fechados">Olhos Fechados<input type="file" accept=".png,.svg" onchange="uploadSlot(event,'eyes_closed')"></label>
+                    <label id="lbl-mouth_closed" class="upload-btn" data-name="Boca Fechada"> Boca Fechada <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_closed')"></label>
+                    <label id="lbl-mouth_open"  class="upload-btn" data-name="Boca Aberta">  Boca Aberta  <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'mouth_open')"></label>
+                    <label id="lbl-expression"  class="upload-btn" data-name="Expressão">    Expressão    <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'expression')"></label>
+                    <label id="lbl-blush"       class="upload-btn" data-name="Blush">        Blush        <input type="file" accept=".png,.svg" onchange="uploadSlot(event,'blush')"></label>
+                </div>
+
+                <button onclick="clearUploads()"
+                        class="w-full py-2 text-[10px] font-bold text-red-400 border border-red-500/30
+                               rounded-xl hover:bg-red-500/10 transition-all">
+                    Limpar Imagens Customizadas
                 </button>
             </div>
+        </div>
 
-            <!-- Abas do Painel -->
-            <div class="flex border-b border-white/10 text-xs font-mono select-none overflow-x-auto shrink-0 pb-1.5 mt-3 gap-2">
-                <button id="tab-btn-brain" class="px-3 py-1.5 font-bold tab-btn-active whitespace-nowrap">🧠 INTELIGÊNCIA & APARÊNCIA</button>
-                <button id="tab-btn-persona" class="px-3 py-1.5 font-bold text-white/50 hover:text-white whitespace-nowrap">🎨 PERSONA (VEADOTUBE)</button>
-            </div>
-
-            <!-- Conteúdo de Abas Rolável -->
-            <div class="flex-1 overflow-y-auto custom-scroll pr-1 py-3 text-xs md:text-sm">
-                
-                <div id="tab-content-brain" class="space-y-4">
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-bold text-white/70 uppercase tracking-wider font-mono">Chave de API Gemini</label>
-                        <input type="password" id="modal-api-key" class="w-full bg-black/25 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-yellow-300 font-mono placeholder-white/20" placeholder="Insira a sua API Key do Gemini...">
-                    </div>
-
-                    <div class="space-y-2 pt-2">
-                        <label class="block text-[10px] font-bold text-white/70 uppercase tracking-wider font-mono">Personalidade da Pipu</label>
-                        <textarea id="modal-personality" rows="3" class="w-full bg-black/25 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-yellow-300 placeholder-white/20 custom-scroll" placeholder="Diga quem a Pipu é e como deve agir..."></textarea>
-                    </div>
-
-                    <div class="pt-3 border-t border-white/10 space-y-3">
-                        <span class="block text-[10px] font-bold text-white/70 uppercase tracking-wider font-mono">Personalizar Cor do Plano de Fundo</span>
-                        <div class="flex items-center space-x-3">
-                            <input type="color" id="modal-bg-color-picker" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0">
-                            <div class="flex gap-2">
-                                <button onclick="setBGColor('#176580')" class="w-6 h-6 rounded-full bg-[#176580] border border-white/20"></button>
-                                <button onclick="setBGColor('#2d6a4f')" class="w-6 h-6 rounded-full bg-[#2d6a4f] border border-white/20"></button>
-                                <button onclick="setBGColor('#4a5759')" class="w-6 h-6 rounded-full bg-[#4a5759] border border-white/20"></button>
-                                <button onclick="setBGColor('#111827')" class="w-6 h-6 rounded-full bg-[#111827] border border-white/20"></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-content-persona" class="hidden space-y-4 font-mono">
-                    <div id="drop-zone" class="border-2 border-dashed border-white/25 rounded-2xl p-6 text-center transition-all cursor-pointer hover:border-yellow-400 hover:bg-white/5 flex flex-col items-center justify-center gap-2 select-none">
-                        <svg class="w-10 h-10 text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span class="text-xs font-bold text-white">Arraste a sua pasta modelo aqui!</span>
-                        <span class="text-[9px] text-white/50 leading-relaxed">Apenas para ficheiros manuais. O modo local funciona sem arrastar!</span>
-                        <label class="mt-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-[#0c3040] rounded-lg text-[10px] font-bold cursor-pointer transition-all active:scale-95 shadow-md">
-                            Selecionar Pasta
-                            <input type="file" id="up-folder-batch" webkitdirectory directory multiple onchange="handleFolderSelect(event)">
-                        </label>
-                    </div>
-
-                    <div class="flex items-center justify-between bg-black/25 p-3 rounded-xl border border-white/5">
-                        <span class="text-[11px] font-bold text-yellow-300">Ou configure manualmente por Emoção:</span>
-                        <select id="modal-emotion-select" class="bg-slate-800 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none border border-white/10">
-                            <option value="neutral">Padrão (Neutral)</option>
-                            <option value="happy">Feliz</option>
-                            <option value="sad">Triste</option>
-                            <option value="brava">Raiva</option>
-                            <option value="shocked">Surpresa</option>
-                            <option value="sono">Sono</option>
-                            <option value="vergonha">Vergonha</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/10 space-y-3">
-                            <span class="text-[10px] font-bold text-yellow-300 block border-b border-white/5 pb-1">1. Rosto e Corpo</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label id="lbl-up-body" class="file-upload-label">Corpo Base <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'body')"></label></div>
-                                <div><label id="lbl-up-nose" class="file-upload-label">Nariz <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'nose')"></label></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/10 space-y-3">
-                            <span class="text-[10px] font-bold text-yellow-300 block border-b border-white/5 pb-1">2. Olhos</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label id="lbl-up-eyes_open" class="file-upload-label">Olhos Abertos <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'eyes_open')"></label></div>
-                                <div><label id="lbl-up-eyes_closed" class="file-upload-label">Olhos Fechados <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'eyes_closed')"></label></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/10 space-y-3">
-                            <span class="text-[10px] font-bold text-yellow-300 block border-b border-white/5 pb-1">3. Boca</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label id="lbl-up-mouth_closed" class="file-upload-label">Boca Fechada <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'mouth_closed')"></label></div>
-                                <div><label id="lbl-up-mouth_open" class="file-upload-label">Boca Aberta <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'mouth_open')"></label></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/10 space-y-3">
-                            <span class="text-[10px] font-bold text-yellow-300 block border-b border-white/5 pb-1">4. Expressões & Acessórios</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><label id="lbl-up-expression" class="file-upload-label">Expressão Extra <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'expression')"></label></div>
-                                <div><label id="lbl-up-blush" class="file-upload-label">Camada Blush <input type="file" accept=".png,.svg" onchange="handleFileUpload(event, 'blush')"></label></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="clearAllUploads()" class="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/30 text-[10px] font-bold transition-all">Limpar Imagens Locais</button>
-                </div>
-            </div>
-
-            <!-- Botões de Ação do Painel -->
-            <div class="flex justify-end space-x-2 pt-3 border-t border-white/10 shrink-0">
-                <button id="btn-modal-cancel" class="px-4 py-2 rounded-xl text-xs font-bold text-white/50 hover:text-white transition-all">Fechar</button>
-                <button id="btn-modal-save" class="px-5 py-2 rounded-xl text-xs font-bold bg-yellow-400 hover:bg-yellow-300 text-[#0c3040] shadow-md transition-all active:scale-95">Guardar</button>
-            </div>
+        <div class="flex justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
+            <button onclick="closeCfg()" class="px-4 py-2 text-xs text-white/50 hover:text-white transition-colors">Fechar</button>
+            <button onclick="saveCfg()"
+                    class="px-5 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-bold rounded-xl transition-all active:scale-95">
+                Guardar
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- Lógica de Controle Unificada da Pipu -->
-    <script>
-        const apiKeyLocalStorageKey = 'pipu_gemini_api_key';
-        const personalityLocalStorageKey = 'pipu_personality_config';
-        const bgColorLocalStorageKey = 'pipu_bg_color_config';
+<script>
+// ── constants ──────────────────────────────────────────────────────────────
+const LS_KEY  = 'pipu_api_key';
+const LS_PERS = 'pipu_personality';
+const LS_BG   = 'pipu_bg';
+const LS_ST   = 'pipu_state';
+const LS_BLK  = 'pipu_blocked';
 
-        let apiKey = localStorage.getItem(apiKeyLocalStorageKey) || "";
-        let customPersonality = localStorage.getItem(personalityLocalStorageKey) || "";
-        let customBgColor = localStorage.getItem(bgColorLocalStorageKey) || "#176580";
+// File paths matching the ACTUAL filenames in the repository
+const A = {
+    body:          'DESIGN/corpo/corpo%20padrao.png',
+    nose:          'DESIGN/corpo/nariz%20padrao.png',
+    eyes_neutral:  'DESIGN/olhos/padrao.png',
+    eyes_happy:    'DESIGN/olhos/sorrindo.png',
+    eyes_sad:      'DESIGN/olhos/tristes.png',
+    eyes_shocked:  'DESIGN/olhos/arregalados.png',
+    eyes_closed:   'DESIGN/olhos/fechados.png',
+    mouth_closed:  'DESIGN/boca/boca%20padrao.png',
+    mouth_open:    'DESIGN/boca/sorriso.png',
+    mouth_shock:   'DESIGN/boca/boca%20inesperado.png',
+};
 
-        let isTyping = false;
-        let isBlocked = localStorage.getItem('pipu_blocked') === 'true';
-        let currentEmotion = 'neutral';
-        let audioCtx = null;
-        let expressionTimeout = null;
+const DEFAULT_ASSETS = {
+    neutral:  { body:A.body, nose:A.nose, eyes_open:A.eyes_neutral, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
+    happy:    { body:A.body, nose:A.nose, eyes_open:A.eyes_happy,   eyes_closed:A.eyes_closed, mouth_closed:A.mouth_open,   mouth_open:A.mouth_open,   expression:'', blush:'' },
+    sad:      { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'', blush:'' },
+    brava:    { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:'', blush:'' },
+    shocked:  { body:A.body, nose:A.nose, eyes_open:A.eyes_shocked, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:'', blush:'' },
+    sono:     { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'', blush:'' },
+    vergonha: { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
+};
 
-        const layers = {
-            body: document.getElementById('layer-body'),
-            nose: document.getElementById('layer-nose'),
-            eyes: document.getElementById('layer-eyes'),
-            mouth: document.getElementById('layer-mouth'),
-            expression: document.getElementById('layer-expression'),
-            blush: document.getElementById('layer-blush')
-        };
+// ── state ──────────────────────────────────────────────────────────────────
+let apiKey      = localStorage.getItem(LS_KEY)  || '';
+let personality = localStorage.getItem(LS_PERS) || '';
+let bgColor     = localStorage.getItem(LS_BG)   || '#176580';
+let isTyping    = false;
+let isBlinking  = false;
+let isBlocked   = localStorage.getItem(LS_BLK) === 'true';
+let curEmo      = 'neutral';
+let audioCtx    = null;
+let pipActive   = false;
+let chatVisible = true;
 
-        const ui = {
-            userInput: document.getElementById('user-input'),
-            btnSend: document.getElementById('btn-send'),
-            chatHistory: document.getElementById('chat-history-scroll'),
-            activeSpeechBubble: document.getElementById('active-speech-bubble'),
-            speechText: document.getElementById('speech-text'),
-            settingsToggle: document.getElementById('btn-settings-toggle'),
-            settingsModal: document.getElementById('settings-modal'),
-            modalClose: document.getElementById('btn-modal-close'),
-            modalCancel: document.getElementById('btn-modal-cancel'),
-            modalSave: document.getElementById('btn-modal-save'),
-            modalApiKey: document.getElementById('modal-api-key'),
-            modalPersonality: document.getElementById('modal-personality'),
-            modalBgColorPicker: document.getElementById('modal-bg-color-picker'),
-            emotionSelect: document.getElementById('modal-emotion-select'),
-            dropZone: document.getElementById('drop-zone'),
-            draggableChat: document.getElementById('draggable-chat'),
-            btnChatToggle: document.getElementById('btn-chat-toggle')
-        };
+let persona = (() => {
+    try {
+        const s = localStorage.getItem(LS_ST);
+        return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_ASSETS));
+    } catch { return JSON.parse(JSON.stringify(DEFAULT_ASSETS)); }
+})();
 
-        const tabs = {
-            btnBrain: document.getElementById('tab-btn-brain'),
-            btnPersona: document.getElementById('tab-btn-persona'),
-            contentBrain: document.getElementById('tab-content-brain'),
-            contentPersona: document.getElementById('tab-content-persona')
-        };
+// ── DOM ────────────────────────────────────────────────────────────────────
+const L = {
+    body:  document.getElementById('l-body'),
+    nose:  document.getElementById('l-nose'),
+    eyes:  document.getElementById('l-eyes'),
+    mouth: document.getElementById('l-mouth'),
+    expr:  document.getElementById('l-expr'),
+    blush: document.getElementById('l-blush'),
+};
+const $inp     = document.getElementById('inp');
+const $msgs    = document.getElementById('msgs');
+const $speech  = document.getElementById('speech');
+const $stxt    = document.getElementById('speech-txt');
+const $chat    = document.getElementById('chat');
 
-        const slotKeysList = ['body', 'nose', 'eyes_open', 'eyes_closed', 'mouth_closed', 'mouth_open', 'expression', 'blush'];
+// ── Expression system ──────────────────────────────────────────────────────
+function setExpr(emo, talking = false) {
+    curEmo = emo;
+    const e = persona[emo] || persona.neutral;
+    setSrc(L.body,  e.body);
+    setSrc(L.nose,  e.nose);
+    setSrc(L.eyes,  isBlinking ? e.eyes_closed : e.eyes_open);
+    setSrc(L.mouth, talking ? e.mouth_open : e.mouth_closed);
+    if (e.expression) { L.expr.style.display = ''; setSrc(L.expr, e.expression); }
+    else L.expr.style.display = 'none';
+    if (e.blush) { L.blush.style.display = ''; setSrc(L.blush, e.blush); }
+    else L.blush.style.display = 'none';
+}
 
-        // --- SISTEMA DIRECTO LOCAL DE HOSPEDAGEM (Caminhos Relativos!) ---
-        // Como o site vai ser hospedado juntamente com a pasta DESIGN, os caminhos devem apontar para a raiz.
-        // O sistema lê e carrega diretamente e de forma limpa os teus ficheiros .png
-        const LOCAL_BASE_PATH = "DESIGN/";
+function setSrc(img, src) {
+    if (!src || img._cur === src) return;
+    img._cur = src;
+    img.src  = src;
+}
 
-        // URLs base conhecidos para a navegação LOCAL (Mapeamento Literal do Victor)
-        const defaultLocalAssets = {
-            neutral: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/padrao.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/sorriso.png`,
-                expression: "",
-                blush: ""
-            },
-            happy: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/sorrindo.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/sorriso.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/sorriso.png`,
-                expression: "",
-                blush: ""
-            },
-            sad: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/triste.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                expression: "",
-                blush: ""
-            },
-            brava: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/triste.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/inesperado.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/inesperado.png`,
-                expression: "",
-                blush: ""
-            },
-            shocked: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/arregalados.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/inesperado.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/inesperado.png`,
-                expression: "",
-                blush: ""
-            },
-            sono: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/triste.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                expression: "",
-                blush: ""
-            },
-            vergonha: {
-                body: `${LOCAL_BASE_PATH}corpo/corpo_padrao.png`,
-                nose: `${LOCAL_BASE_PATH}nariz/nariz.png`,
-                eyes_open: `${LOCAL_BASE_PATH}olhos/triste.png`,
-                eyes_closed: `${LOCAL_BASE_PATH}olhos/fechado.png`,
-                mouth_closed: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                mouth_open: `${LOCAL_BASE_PATH}boca/padrao.png`,
-                expression: "",
-                blush: ""
-            }
-        };
+// ── Blink ──────────────────────────────────────────────────────────────────
+function scheduleBlink() {
+    setTimeout(() => {
+        if (!isTyping && !isBlocked && !isBlinking) {
+            isBlinking = true;
+            setExpr(curEmo, false);
+            setTimeout(() => { isBlinking = false; setExpr(curEmo, isTyping); }, 140);
+        }
+        scheduleBlink();
+    }, 3000 + Math.random() * 3000);
+}
+scheduleBlink();
 
-        let personaState = {};
+// ── Audio ──────────────────────────────────────────────────────────────────
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function chirp() {
+    try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = [760,810,860,910,960,1020][Math.floor(Math.random()*6)];
+        gain.gain.setValueAtTime(0.012, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.065);
+    } catch {}
+}
 
-        function initPersonaState() {
-            const savedState = localStorage.getItem('pipu_persona_state');
-            if (savedState) {
-                personaState = JSON.parse(savedState);
-            } else {
-                personaState = JSON.parse(JSON.stringify(defaultLocalAssets));
+// ── Speak / typing animation ───────────────────────────────────────────────
+function speak(msg) {
+    isTyping = true;
+    $stxt.textContent = '';
+    $speech.classList.remove('off');
+    const text = msg.text;
+    let i = 0;
+    function step() {
+        if (i < text.length) {
+            $stxt.textContent += text[i++];
+            if (i % 2 === 0) { chirp(); setExpr(msg.emotion, true); }
+            else setExpr(msg.emotion, false);
+            setTimeout(step, 18 + Math.random() * 22);
+        } else {
+            isTyping = false;
+            setExpr(msg.emotion, false);
+            addBubble('her', text);
+            setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, 4500);
+        }
+    }
+    step();
+}
+
+// ── Chat bubbles ───────────────────────────────────────────────────────────
+function addBubble(who, text) {
+    const d = document.createElement('div');
+    d.className = (who === 'her'
+        ? 'bubble-her self-start'
+        : 'bubble-user self-end')
+        + ' px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm fade-up';
+    d.textContent = text;
+    $msgs.appendChild(d);
+    $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+// ── Local knowledge base ───────────────────────────────────────────────────
+const DB = [
+    { kw:['victor','criador','dono','quem é','portfolio'],  emotion:'happy',    text:'O Victor é o meu criador! Ele é desenvolvedor, especialista em pixel art, JavaScript e interfaces IA! 🧑‍💻' },
+    { kw:['github','git','projeto','código','repositório'], emotion:'happy',    text:'Os projetos do Victor estão no GitHub! Clica no ícone do dock!' },
+    { kw:['instagram','insta'],                             emotion:'vergonha', text:'Podes ver as artes do Victor no Instagram! O link está no dock! 📸' },
+    { kw:['spotify','música','musica','playlist'],          emotion:'sono',     text:'O Victor adora programar ouvindo música no Spotify! 🎵' },
+    { kw:['linda','fofa','te amo','gatinha','perfeita'],    emotion:'vergonha', text:'Aww... isso me deixa corada! Obrigada... Hihi! 😳' },
+    { kw:['oi','olá','ola','eae','hey','bom dia','boa tarde'], emotion:'happy', text:'Pipu pipu! Olá! Como posso ajudar hoje? 💛' },
+    { kw:['obrigad','valeu','thanks'],                      emotion:'happy',    text:'De nada! Fico feliz em ajudar! ✨' },
+    { kw:['tchau','xau','até logo','adeus'],                emotion:'sad',      text:'Até logo! Vem conversar comigo quando quiser! 👋' },
+];
+
+const TOXIC = ['idiota','burra','odeio','bosta','merda','caralho','puta','lixo','feio','feia'];
+
+// ── Process user message ───────────────────────────────────────────────────
+async function process(text) {
+    const t = text.toLowerCase().trim();
+
+    if (isBlocked) { speak({ emotion:'brava', text:'Acesso bloqueado! 🔒' }); return; }
+
+    if (TOXIC.some(w => t.includes(w))) {
+        isBlocked = true;
+        localStorage.setItem(LS_BLK, 'true');
+        $inp.disabled = true;
+        $inp.placeholder = '🔒 Bloqueado';
+        speak({ emotion:'brava', text:'Não gostei disso! Bye bye! 💢' });
+        return;
+    }
+
+    if (apiKey) {
+        $stxt.textContent = 'Pensando... ✨';
+        $speech.classList.remove('off');
+        try {
+            const reply = await callGemini(text);
+            speak(reply);
+            return;
+        } catch (err) {
+            $speech.classList.add('off');
+            isTyping = false;
+        }
+    }
+
+    for (const item of DB) {
+        if (item.kw.some(k => t.includes(k))) { speak(item); return; }
+    }
+
+    speak({ emotion:'neutral', text:'Podes perguntar-me sobre o Victor ou configurar a API Gemini nas definições! ⚙️' });
+}
+
+// ── Gemini API ─────────────────────────────────────────────────────────────
+async function callGemini(query) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const sys  = personality
+        ? `Você é a Pipu, assistente fofa do Victor. Responda em pt-BR. ${personality}\nSempre retorne JSON: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"..."}`
+        : `Você é a Pipu, assistente virtual fofa e carismática criada pelo desenvolvedor Victor. Responda em português do Brasil de forma alegre. Sempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+    const body = {
+        contents: [{ parts:[{ text:query }] }],
+        systemInstruction: { parts:[{ text:sys }] },
+        generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type:'OBJECT',
+                properties: {
+                    emotion:{ type:'STRING', enum:['neutral','happy','sad','brava','shocked','sono','vergonha'] },
+                    text:   { type:'STRING' }
+                },
+                required:['emotion','text']
             }
         }
+    };
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return JSON.parse(data.candidates[0].content.parts[0].text);
+}
 
-        // --- SISTEMA DE ARRASTAMENTO E IMPORTAÇÃO DE PASTAS INTEIRAS ---
-        async function traverseFileTree(item, path = "") {
-            if (item.isFile) {
-                const file = await new Promise(resolve => item.file(resolve));
-                return [{ file, path: path + file.name }];
-            } else if (item.isDirectory) {
-                let dirReader = item.createReader();
-                let entries = await new Promise(resolve => dirReader.readEntries(resolve));
-                let results = [];
-                for (let entry of entries) {
-                    results = results.concat(await traverseFileTree(entry, path + item.name + "/"));
-                }
-                return results;
-            }
-            return [];
+// ── Submit ─────────────────────────────────────────────────────────────────
+async function submit() {
+    const text = $inp.value.trim();
+    if (!text || isTyping) return;
+    $inp.value = '';
+    initAudio();
+    addBubble('user', text);
+    isTyping = true;
+    setTimeout(() => { isTyping = false; process(text); }, 280);
+}
+
+document.getElementById('btn-send').addEventListener('click', submit);
+$inp.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
+
+function quickAsk(q) {
+    if (isTyping || isBlocked) return;
+    $inp.value = q;
+    submit();
+}
+
+// ── Avatar click ───────────────────────────────────────────────────────────
+const CLICK_REPLIES = [
+    { emotion:'shocked',  text:'Ei! Fizeste-me cócegas! 😲' },
+    { emotion:'vergonha', text:'Ahh! Fico envergonhada! 😳' },
+    { emotion:'happy',    text:'Hihi! Pipu pipu! ✨' },
+    { emotion:'brava',    text:'Pára! Não gosto disso! 😤' },
+];
+function avatarClick() {
+    if (isTyping || isBlocked) return;
+    initAudio();
+    speak(CLICK_REPLIES[Math.floor(Math.random() * CLICK_REPLIES.length)]);
+}
+
+// ── Chat show/hide ─────────────────────────────────────────────────────────
+function showChat(on) {
+    chatVisible = on;
+    $chat.style.opacity   = on ? '1' : '0';
+    $chat.style.transform = on ? 'scale(1)' : 'scale(0.94)';
+    $chat.style.pointerEvents = on ? '' : 'none';
+}
+$chat.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+
+// ── Drag chat window ───────────────────────────────────────────────────────
+(function() {
+    const el = $chat, hdr = document.getElementById('chat-hdr');
+    let mx=0, my=0;
+    hdr.addEventListener('mousedown', e => {
+        if (e.target.closest('button')) return;
+        mx = e.clientX; my = e.clientY;
+        function drag(e) {
+            const dx = mx - e.clientX, dy = my - e.clientY;
+            mx = e.clientX; my = e.clientY;
+            el.style.top   = Math.max(0, el.offsetTop  - dy) + 'px';
+            el.style.left  = Math.max(0, el.offsetLeft - dx) + 'px';
+            el.style.right = 'auto';
         }
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', () => document.removeEventListener('mousemove', drag), { once:true });
+    });
+})();
 
-        async function handleBatchFiles(files) {
-            let mappedCount = 0;
-            let filePromises = [];
+// ── Password modal ─────────────────────────────────────────────────────────
+document.getElementById('btn-cfg').addEventListener('click', () => {
+    const m = document.getElementById('pw-modal');
+    m.style.display = 'flex';
+    document.getElementById('pw-inp').value = '';
+    document.getElementById('pw-err').style.opacity = '0';
+    setTimeout(() => document.getElementById('pw-inp').focus(), 50);
+});
+function closePw() { document.getElementById('pw-modal').style.display = 'none'; }
+function checkPw() {
+    if (document.getElementById('pw-inp').value === '1qaz2wsx') {
+        closePw(); openCfg();
+    } else {
+        document.getElementById('pw-err').style.opacity = '1';
+        document.getElementById('pw-inp').value = '';
+        document.getElementById('pw-inp').focus();
+    }
+}
+document.getElementById('pw-inp').addEventListener('keypress', e => { if (e.key==='Enter') checkPw(); });
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const path = (file.webkitRelativePath || file.name).toLowerCase();
-                
-                if (!path.endsWith('.svg') && !path.endsWith('.png') && !path.endsWith('.jpg') && !path.endsWith('.jpeg')) continue;
+// ── Settings modal ─────────────────────────────────────────────────────────
+function openCfg() {
+    initAudio();
+    document.getElementById('inp-api').value   = apiKey;
+    document.getElementById('inp-pers').value  = personality;
+    document.getElementById('inp-color').value = bgColor;
+    refreshUploadUI();
+    const m = document.getElementById('cfg-modal');
+    m.style.display = 'flex';
+    switchTab('brain');
+}
+function closeCfg() { document.getElementById('cfg-modal').style.display = 'none'; }
+function saveCfg() {
+    apiKey      = document.getElementById('inp-api').value.trim();
+    personality = document.getElementById('inp-pers').value.trim();
+    localStorage.setItem(LS_KEY,  apiKey);
+    localStorage.setItem(LS_PERS, personality);
+    closeCfg();
+    speak({ emotion:'happy', text:'Configurações guardadas com sucesso! ✅' });
+}
+function switchTab(t) {
+    document.getElementById('tab-brain').classList.toggle('hidden', t !== 'brain');
+    document.getElementById('tab-persona').classList.toggle('hidden', t !== 'persona');
+    document.getElementById('t-brain').className   = 'py-3 transition-colors ' + (t==='brain'   ? 'tab-on' : 'tab-off');
+    document.getElementById('t-persona').className = 'py-3 transition-colors ' + (t==='persona' ? 'tab-on' : 'tab-off');
+}
 
-                filePromises.push(new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const dataUrl = e.target.result;
-                        const success = mapFileToPersona(path, dataUrl);
-                        if (success) mappedCount++;
-                        resolve();
-                    };
-                    reader.readAsDataURL(file);
-                }));
-            }
+// ── Background color ───────────────────────────────────────────────────────
+function setBg(c) {
+    bgColor = c;
+    document.body.style.backgroundColor = c;
+    const el = document.getElementById('inp-color');
+    if (el) el.value = c;
+    localStorage.setItem(LS_BG, c);
+}
+document.getElementById('inp-color').addEventListener('input', e => setBg(e.target.value));
 
-            await Promise.all(filePromises);
-            localStorage.setItem('pipu_persona_state', JSON.stringify(personaState));
-            refreshCharacterLayers();
-            refreshUploadUI();
-            
-            sendPipuResponse({
-                emotion: 'happy',
-                text: `Peep bop! Victor, importei a pasta modelo com sucesso! Mapeei e configurei ${mappedCount} ficheiros de design para as tuas emoções!`
-            });
+// ── Upload system ──────────────────────────────────────────────────────────
+const SLOTS = ['body','nose','eyes_open','eyes_closed','mouth_closed','mouth_open','expression','blush'];
+
+function uploadSlot(event, slot) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const emo = document.getElementById('emo-sel').value;
+        if (!persona[emo]) persona[emo] = { ...DEFAULT_ASSETS[emo] };
+        persona[emo][slot] = ev.target.result;
+        try { localStorage.setItem(LS_ST, JSON.stringify(persona)); } catch { alert('Memória cheia!'); }
+        setExpr(curEmo, isTyping);
+        refreshUploadUI();
+    };
+    reader.readAsDataURL(file);
+}
+
+function refreshUploadUI() {
+    const emo = document.getElementById('emo-sel').value;
+    const e   = persona[emo] || DEFAULT_ASSETS[emo];
+    SLOTS.forEach(s => {
+        const lbl = document.getElementById('lbl-' + s);
+        if (!lbl) return;
+        const val  = e[s];
+        const name = lbl.dataset.name || s;
+        const has  = val && val.startsWith('data:');
+        lbl.className = 'upload-btn' + (has ? ' ok' : '');
+        lbl.firstChild.textContent = name + (has ? ' ✓' : '');
+    });
+}
+
+function clearUploads() {
+    persona = JSON.parse(JSON.stringify(DEFAULT_ASSETS));
+    localStorage.setItem(LS_ST, JSON.stringify(persona));
+    setExpr(curEmo, isTyping);
+    refreshUploadUI();
+}
+
+async function onFolderInput(e) { await batchFiles(Array.from(e.target.files)); }
+async function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('border-yellow-400','bg-white/5');
+    let files = [];
+    for (const item of e.dataTransfer.items) {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) files = files.concat(await walkDir(entry));
+    }
+    if (!files.length) files = Array.from(e.dataTransfer.files);
+    batchFiles(files);
+}
+async function walkDir(entry) {
+    if (entry.isFile) return [await new Promise(r => entry.file(r))];
+    const reader = entry.createReader();
+    const entries = await new Promise(r => reader.readEntries(r));
+    let out = [];
+    for (const en of entries) out = out.concat(await walkDir(en));
+    return out;
+}
+async function batchFiles(files) {
+    let n = 0;
+    await Promise.all(files.map(f => new Promise(res => {
+        const p = (f.webkitRelativePath || f.name).toLowerCase();
+        if (!/\.(png|svg|jpg|jpeg)$/.test(p)) { res(); return; }
+        const rd = new FileReader();
+        rd.onload = ev => { if (mapFile(p, ev.target.result)) n++; res(); };
+        rd.readAsDataURL(f);
+    })));
+    localStorage.setItem(LS_ST, JSON.stringify(persona));
+    setExpr(curEmo, isTyping);
+    refreshUploadUI();
+    speak({ emotion:'happy', text:`Importei ${n} ficheiro(s)! 🎨` });
+}
+function mapFile(p, data) {
+    const has = (...w) => w.some(x => p.includes(x));
+    let ok = false;
+    if (has('corpo') && !has('olho','boca','nariz')) { Object.values(persona).forEach(e => e.body=data); ok=true; }
+    if (has('nariz')) { Object.values(persona).forEach(e => e.nose=data); ok=true; }
+    if (has('olho','eye')) {
+        if      (has('sorri','feliz','happy'))          { persona.happy.eyes_open=data; ok=true; }
+        else if (has('arregal','shock','surpresa'))     { persona.shocked.eyes_open=data; ok=true; }
+        else if (has('trist','sad'))                    { ['sad','brava','sono','vergonha'].forEach(k=>persona[k].eyes_open=data); ok=true; }
+        else if (has('fechad','closed','blink'))        { Object.values(persona).forEach(e=>e.eyes_closed=data); ok=true; }
+        else                                            { persona.neutral.eyes_open=data; ok=true; }
+    }
+    if (has('boca','mouth')) {
+        if      (has('sorri','sorriso','happy'))        { ['happy'].forEach(k=>{persona[k].mouth_closed=persona[k].mouth_open=data;}); ok=true; }
+        else if (has('inespe','shock','brava'))         { ['shocked','brava'].forEach(k=>{persona[k].mouth_closed=persona[k].mouth_open=data;}); ok=true; }
+        else                                            { ['neutral','sad','sono','vergonha'].forEach(k=>persona[k].mouth_closed=data); ok=true; }
+    }
+    if (has('blush','envergon')) { persona.vergonha.blush=data; ok=true; }
+    return ok;
+}
+
+// ── Picture-in-Picture ─────────────────────────────────────────────────────
+const pipC   = document.getElementById('pip-c');
+const pipV   = document.getElementById('pip-v');
+const pipCtx = pipC.getContext('2d');
+try { pipV.srcObject = pipC.captureStream(24); pipV.play(); } catch {}
+
+function drawPip() {
+    if (!pipActive) return;
+    pipCtx.fillStyle = bgColor;
+    pipCtx.fillRect(0, 0, pipC.width, pipC.height);
+    [L.body, L.nose, L.eyes, L.mouth].forEach(img => {
+        if (img.complete && img.naturalWidth) pipCtx.drawImage(img, 0, 0, pipC.width, pipC.height);
+    });
+    requestAnimationFrame(drawPip);
+}
+document.getElementById('btn-pip').addEventListener('click', async () => {
+    initAudio();
+    try {
+        if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture(); pipActive = false;
+        } else {
+            pipActive = true; drawPip();
+            await pipV.requestPictureInPicture();
         }
-
-        function mapFileToPersona(path, dataUrl) {
-            let matched = false;
-            const contains = (p, ...words) => words.some(w => p.includes(w));
-
-            // 1. CORPO & NARIZ
-            if (contains(path, 'corpo_padrao', 'corpo_padr\u00e3o') || (contains(path, 'corpo') && !contains(path, 'olho', 'boca', 'express'))) {
-                Object.keys(personaState).forEach(emo => { personaState[emo].body = dataUrl; });
-                matched = true;
-            }
-            if (contains(path, 'nariz')) {
-                Object.keys(personaState).forEach(emo => { personaState[emo].nose = dataUrl; });
-                matched = true;
-            }
-
-            // 2. OLHOS
-            if (contains(path, 'olho', 'eyes')) {
-                if (contains(path, 'padrao', 'padr\u00f5es', 'neutral')) { personaState.neutral.eyes_open = dataUrl; matched = true; }
-                if (contains(path, 'sorri', 'feliz', 'felizes', 'happy')) { personaState.happy.eyes_open = dataUrl; matched = true; }
-                if (contains(path, 'arrega', 'shock', 'surpresa', 'arregalados')) { personaState.shocked.eyes_open = dataUrl; matched = true; }
-                if (contains(path, 'trist', 'sad')) {
-                    personaState.sad.eyes_open = dataUrl;
-                    personaState.brava.eyes_open = dataUrl;
-                    personaState.sono.eyes_open = dataUrl;
-                    personaState.vergonha.eyes_open = dataUrl;
-                    matched = true;
-                }
-                if (contains(path, 'fechad', 'closed', 'fechados', 'blink')) {
-                    Object.keys(personaState).forEach(emo => { personaState[emo].eyes_closed = dataUrl; });
-                    matched = true;
-                }
-            }
-
-            // 3. BOCA
-            if (contains(path, 'boca', 'mouth')) {
-                if (contains(path, 'padrao', 'padr\u00e3o', 'neutral')) {
-                    personaState.neutral.mouth_closed = dataUrl;
-                    personaState.sad.mouth_closed = dataUrl;
-                    personaState.sono.mouth_closed = dataUrl;
-                    personaState.vergonha.mouth_closed = dataUrl;
-                    matched = true;
-                }
-                if (contains(path, 'sorri', 'feliz', 'happy', 'sorriso')) {
-                    personaState.happy.mouth_closed = dataUrl;
-                    personaState.happy.mouth_open = dataUrl;
-                    matched = true;
-                }
-                if (contains(path, 'inespe', 'shock', 'surpresa', 'inesperado')) {
-                    personaState.shocked.mouth_closed = dataUrl;
-                    personaState.shocked.mouth_open = dataUrl;
-                    personaState.brava.mouth_closed = dataUrl;
-                    personaState.brava.mouth_open = dataUrl;
-                    matched = true;
-                }
-                if (contains(path, 'falan', 'open', 'abert', 'talk', 'sorriso')) {
-                    personaState.neutral.mouth_open = dataUrl;
-                    personaState.sad.mouth_open = dataUrl;
-                    personaState.sono.mouth_open = dataUrl;
-                    personaState.vergonha.mouth_open = dataUrl;
-                    matched = true;
-                }
-            }
-
-            // 4. EXPRESSÕES / ACESSÓRIOS
-            if (contains(path, 'expressoes', 'express\u00f5es', 'acessorios', 'expressao', 'express\u00e3o')) {
-                if (contains(path, 'raiva', 'brava', 'irritada')) { personaState.brava.expression = dataUrl; matched = true; }
-                if (contains(path, 'coracao', 'cora\u00e7\u00e3o')) {
-                    personaState.happy.expression = dataUrl;
-                    personaState.vergonha.expression = dataUrl;
-                    matched = true;
-                }
-                if (contains(path, 'envergonha', 'blush')) { personaState.vergonha.blush = dataUrl; matched = true; }
-                if (contains(path, 'estrela')) { personaState.happy.expression = dataUrl; matched = true; }
-                if (contains(path, 'indecisa', 'suor')) { personaState.shocked.expression = dataUrl; matched = true; }
-                if (contains(path, 'sono', 'zzz')) { personaState.sono.expression = dataUrl; matched = true; }
-            }
-
-            return matched;
-        }
-
-        // Eventos do Drop Zone de Pasta
-        ui.dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            ui.dropZone.classList.add('border-yellow-400', 'bg-white/10');
-        });
-        ui.dropZone.addEventListener('dragleave', () => {
-            ui.dropZone.classList.remove('border-yellow-400', 'bg-white/10');
-        });
-        ui.dropZone.addEventListener('drop', async (e) => {
-            e.preventDefault();
-            ui.dropZone.classList.remove('border-yellow-400', 'bg-white/10');
-            const items = e.dataTransfer.items;
-            let fileList = [];
-            if (items) {
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i].webkitGetAsEntry();
-                    if (item) {
-                        const traversed = await traverseFileTree(item);
-                        fileList = fileList.concat(traversed.map(t => t.file));
-                    }
-                }
-            } else {
-                fileList = Array.from(e.dataTransfer.files);
-            }
-            if (fileList.length > 0) {
-                handleBatchFiles(fileList);
-            }
-        });
-
-        window.handleFolderSelect = function(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                handleBatchFiles(Array.from(files));
-            }
-        };
-
-        // --- SISTEMA DINÂMICO DE EXPRESSÕES FACIAIS ---
-        function setPipuExpression(emotion, isTalking = false) {
-            currentEmotion = emotion;
-            const currentEmotionAssets = personaState[emotion] || personaState.neutral || defaultLocalAssets.neutral;
-
-            function applyDirectLocalLoad(element, srcVal) {
-                if (!srcVal) return;
-                
-                // Aplica o src diretamente: Base64 do upload ou o caminho PNG da pasta local.
-                // Sem fallbacks que causem falsos erros na consola!
-                element.src = srcVal;
-                element.onload = function() { handleImageLoad(this); };
-                element.onerror = function() { handleImageError(this); };
-            }
-
-            applyDirectLocalLoad(layers.body, currentEmotionAssets.body);
-            applyDirectLocalLoad(layers.nose, currentEmotionAssets.nose);
-            
-            const eyesAsset = isBlinking ? (currentEmotionAssets.eyes_closed || personaState.neutral.eyes_closed) : (currentEmotionAssets.eyes_open || personaState.neutral.eyes_open);
-            applyDirectLocalLoad(layers.eyes, eyesAsset);
-
-            const mouthAsset = isTalking ? (currentEmotionAssets.mouth_open || personaState.neutral.mouth_open) : (currentEmotionAssets.mouth_closed || personaState.neutral.mouth_closed);
-            applyDirectLocalLoad(layers.mouth, mouthAsset);
-
-            // Expressão Extra
-            if (currentEmotionAssets.expression) {
-                applyDirectLocalLoad(layers.expression, currentEmotionAssets.expression);
-                layers.expression.classList.remove('hidden');
-            } else {
-                layers.expression.classList.add('hidden');
-            }
-
-            // Blush
-            if (currentEmotionAssets.blush) {
-                applyDirectLocalLoad(layers.blush, currentEmotionAssets.blush);
-                layers.blush.classList.remove('hidden');
-            } else {
-                layers.blush.classList.add('hidden');
-            }
-
-            // Fallback Vector Sincronização de Expressões
-            const fallbackBody = document.getElementById('pipu-fallback-vector');
-            if (fallbackBody && !fallbackBody.classList.contains('hidden')) {
-                const fallbackBlushL = document.getElementById('fallback-blush-l');
-                const fallbackBlushR = document.getElementById('fallback-blush-r');
-                const fallbackMouth = document.getElementById('fallback-mouth');
-                const fallbackEyeL = document.getElementById('fallback-eye-l');
-                const fallbackEyeR = document.getElementById('fallback-eye-r');
-
-                // Reseta
-                fallbackBlushL.classList.add('opacity-0');
-                fallbackBlushR.classList.add('opacity-0');
-                fallbackMouth.setAttribute('d', "M46 51Q50 54 54 51");
-                fallbackEyeL.setAttribute('r', '3.5');
-                fallbackEyeR.setAttribute('r', '3.5');
-
-                if (emotion === 'happy') {
-                    fallbackMouth.setAttribute('d', "M45 50Q50 56 55 50");
-                } else if (emotion === 'shocked') {
-                    fallbackEyeL.setAttribute('r', '5');
-                    fallbackEyeR.setAttribute('r', '5');
-                    fallbackMouth.setAttribute('d', "M48 52A2 2 0 1 1 52 52A2 2 0 1 1 48 52");
-                } else if (emotion === 'vergonha') {
-                    fallbackBlushL.classList.remove('opacity-0');
-                    fallbackBlushR.classList.remove('opacity-0');
-                } else if (emotion === 'sad' || emotion === 'brava') {
-                    fallbackMouth.setAttribute('d', "M46 53Q50 49 54 53");
-                }
-            }
-        }
-
-        function refreshCharacterLayers() {
-            setPipuExpression(currentEmotion, isTyping);
-        }
-
-        /* Drag and drop manual triggers for single files */
-        window.handleFileUpload = function(event, slotKey) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const currentSelectedEmotion = ui.emotionSelect.value;
-                    if (!personaState[currentSelectedEmotion]) {
-                        personaState[currentSelectedEmotion] = {};
-                    }
-                    personaState[currentSelectedEmotion][slotKey] = e.target.result;
-                    localStorage.setItem('pipu_persona_state', JSON.stringify(personaState));
-                    refreshCharacterLayers();
-                    refreshUploadUI();
-                } catch (err) {
-                    alert("Limite de memória atingido para este ficheiro. Reduza o tamanho ou use PNG compactado!");
-                }
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.clearAllUploads = function() {
-            personaState = JSON.parse(JSON.stringify(defaultLocalAssets));
-            localStorage.setItem('pipu_persona_state', JSON.stringify(defaultLocalAssets));
-            refreshCharacterLayers();
-            refreshUploadUI();
-        };
-
-        function refreshUploadUI() {
-            const currentSelectedEmotion = ui.emotionSelect.value;
-            const emotionAssets = personaState[currentSelectedEmotion] || defaultLocalAssets[currentSelectedEmotion];
-
-            slotKeysList.forEach(slot => {
-                const label = document.getElementById('lbl-up-' + slot);
-                if (label) {
-                    const value = emotionAssets[slot];
-                    if (value && value.startsWith('data:')) {
-                        label.classList.add('has-file');
-                        label.innerText = slot.replace('_', ' ').toUpperCase() + " ✓";
-                    } else {
-                        label.classList.remove('has-file');
-                        label.innerText = slot.replace('_', ' ').toUpperCase();
-                    }
-                }
-            });
-        }
-
-        ui.emotionSelect.addEventListener('change', () => {
-            refreshUploadUI();
-        });
-
-        // --- ABAS DO MODAL ---
-        function switchTab(activeTab) {
-            tabs.btnBrain.classList.remove('tab-btn-active'); tabs.btnBrain.classList.add('text-white/50');
-            tabs.btnPersona.classList.remove('tab-btn-active'); tabs.btnPersona.classList.add('text-white/50');
-            tabs.contentBrain.classList.add('hidden');
-            tabs.contentPersona.classList.add('hidden');
-
-            if (activeTab === 'brain') {
-                tabs.btnBrain.classList.add('tab-btn-active');
-                tabs.btnBrain.classList.remove('text-white/50');
-                tabs.contentBrain.classList.remove('hidden');
-            } else if (activeTab === 'persona') {
-                tabs.btnPersona.classList.add('tab-btn-active');
-                tabs.btnPersona.classList.remove('text-white/50');
-                tabs.contentPersona.classList.remove('hidden');
-                refreshUploadUI();
-            }
-        }
-        tabs.btnBrain.addEventListener('click', () => switchTab('brain'));
-        tabs.btnPersona.addEventListener('click', () => switchTab('persona'));
-
-        // --- SINTETIZADOR DE VOZ FEMININA ESTILO CELESTE (Polido & Melódico) ---
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playCelesteTalkChirp() {
-            try {
-                initAudio();
-                const now = audioCtx.currentTime;
-                
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                const filter = audioCtx.createBiquadFilter();
-
-                osc1.type = 'sine';
-                osc2.type = 'sine';
-
-                const pitches = [760, 810, 860, 910, 960, 1020];
-                const baseFreq = pitches[Math.floor(Math.random() * pitches.length)];
-
-                osc1.frequency.setValueAtTime(baseFreq, now);
-                osc2.frequency.setValueAtTime(baseFreq * 1.5, now);
-                osc1.frequency.exponentialRampToValueAtTime(baseFreq * 1.05, now + 0.05);
-
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(1400, now);
-
-                gain.gain.setValueAtTime(0.015, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-
-                osc1.connect(filter);
-                osc2.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc1.start(now);
-                osc2.start(now);
-                osc1.stop(now + 0.07);
-                osc2.stop(now + 0.07);
-            } catch (e) {}
-        }
-
-        // --- SISTEMA DE PISCADELAS ---
-        let isBlinking = false;
-        let blinkInterval = setInterval(() => {
-            if (isTyping || isBlocked || isBlinking) return;
-            
-            const currentEmotionAssets = personaState[currentEmotion] || personaState.neutral;
-            if (currentEmotionAssets && currentEmotionAssets.eyes_closed) {
-                isBlinking = true;
-                refreshCharacterLayers(); // Força a troca para olhos fechados
-                
-                // Trata o piscar no fallback vector
-                const fallbackEyeL = document.getElementById('fallback-eye-l');
-                const fallbackEyeR = document.getElementById('fallback-eye-r');
-                let prevH = "3.5";
-                if (fallbackEyeL) {
-                    prevH = fallbackEyeL.getAttribute('r');
-                    fallbackEyeL.setAttribute('r', '0.5');
-                    fallbackEyeR.setAttribute('r', '0.5');
-                }
-
-                setTimeout(() => {
-                    if (!isTyping) {
-                        isBlinking = false;
-                        refreshCharacterLayers(); // Retorna aos olhos abertos
-                        if (fallbackEyeL) {
-                            fallbackEyeL.setAttribute('r', prevH);
-                            fallbackEyeR.setAttribute('r', prevH);
-                        }
-                    }
-                }, 140);
-            }
-        }, 3800 + Math.random() * 2000);
-
-        // --- LOGICA DE IMPRESSÃO GRADUAL COM ESPAÇOS CORRETOS ---
-        function sendPipuMessage(msgObj) {
-            isTyping = true;
-
-            ui.activeSpeechBubble.classList.remove('opacity-0', 'translate-y-4');
-            ui.activeSpeechBubble.classList.add('opacity-100', 'translate-y-0');
-
-            ui.speechText.innerText = "";
-            const text = msgObj.text;
-            let idx = 0;
-
-            function type() {
-                if (idx < text.length) {
-                    ui.speechText.innerText += text.charAt(idx);
-                    
-                    if (idx % 2 === 0) {
-                        playCelesteTalkChirp();
-                        setPipuExpression(msgObj.emotion, true);
-                    } else {
-                        setPipuExpression(msgObj.emotion, false);
-                    }
-
-                    idx++;
-                    setTimeout(type, 25);
-                } else {
-                    isTyping = false;
-                    setPipuExpression(msgObj.emotion, false);
-
-                    addMessageToHistory('pipu', text);
-
-                    setTimeout(() => {
-                        if (!isTyping) {
-                            ui.activeSpeechBubble.classList.add('opacity-0', 'translate-y-4');
-                            ui.activeSpeechBubble.classList.remove('opacity-100', 'translate-y-0');
-                        }
-                    }, 4500);
-                }
-            }
-            type();
-        }
-
-        function addMessageToHistory(sender, text) {
-            const bubble = document.createElement('div');
-            if (sender === 'user') {
-                bubble.className = "self-end bg-blue-500 text-white rounded-2xl rounded-tr-none px-4 py-2.5 text-xs md:text-sm max-w-[85%] shadow-md leading-relaxed animate-fade-in";
-                bubble.innerHTML = `<p>${escapeHtml(text)}</p>`;
-            } else {
-                bubble.className = "self-start bg-gray-200 text-gray-800 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs md:text-sm max-w-[85%] shadow-md leading-relaxed animate-fade-in";
-                bubble.innerHTML = `<p>${escapeHtml(text)}</p>`;
-            }
-            ui.chatHistory.appendChild(bubble);
-            ui.chatHistory.scrollTop = ui.chatHistory.scrollHeight;
-        }
-
-        function escapeHtml(text) {
-            const temp = document.createElement('div');
-            temp.innerText = text;
-            return temp.innerHTML;
-        }
-
-        // --- EXPONENTIAL BACKOFF FOR API CALLS ---
-        async function fetchWithRetry(url, options, maxRetries = 5) {
-            let delay = 1000;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (response.ok) {
-                        return response;
-                    }
-                } catch (error) {
-                    if (i === maxRetries - 1) throw error;
-                }
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2;
-            }
-            throw new Error("All retries failed");
-        }
-
-        // --- CALL GEMINI API ---
-        async function getGeminiResponse(query) {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            
-            const baseInstructions = `Você é a Pipu, assistente virtual oficial e carismática criada pelo desenvolvedor Victor.
-            Sua personalidade é fofa, enérgica, prestativa e bem-humorada.
-            Responda sempre em português do Brasil, mantendo o tom divertido e fofo (peep, bop, pipu!).
-            Fale sobre o Victor se perguntarem por ele: ele domina programação de alta performance, pixel art, JavaScript e Tailwind CSS.
-            Ele tem projetos excelentes no GitHub, fotos no Instagram e playlist favorita no Spotify.
-            Dê respostas limpas, legíveis, respeitando a quebra de linha natural.
-            
-            Você deve retornar estritamente uma resposta JSON válida com o seguinte esquema:
-            {
-              "emotion": "neutral" | "happy" | "sad" | "brava" | "shocked" | "sono" | "vergonha",
-              "text": "Sua resposta carismática, alegre e cheia de personalidade aqui."
-            }`;
-
-            const finalInstruction = customPersonality !== "" ? `${baseInstructions}\nInstruções de Personalidade Customizada: ${customPersonality}` : baseInstructions;
-
-            const payload = {
-                contents: [{ parts: [{ text: query }] }],
-                systemInstruction: { parts: [{ text: finalInstruction }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            emotion: { type: "STRING", enum: ["neutral", "happy", "sad", "brava", "shocked", "sono", "vergonha"] },
-                            text: { type: "STRING" }
-                        },
-                        required: ["emotion", "text"]
-                    }
-                }
-            };
-
-            const response = await fetchWithRetry(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-            const textResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            return JSON.parse(textResponse);
-        }
-
-        // --- SISTEMA DE RESPOSTAS LOCAIS DO VICTOR ---
-        const localPredefinedDatabase = [
-            { keywords: ['quem é', 'quem e', 'victor', 'criador', 'dono', 'portfolio', 'portfólio'], emotion: 'happy', text: "O Victor é o meu criador! Ele é um desenvolvedor fantástico que domina programação de alta performance, pixel art, design interativo e me dá vida através de camadas!" },
-            { keywords: ['instagram', 'insta', 'rede social', 'redes'], emotion: 'vergonha', text: "Claro! Podes acompanhar as artes digitais e bastidores do Victor no Instagram! Tem links rápidos no dock de atalhos abaixo!" },
-            { keywords: ['github', 'git', 'projetos', 'repositorio', 'repositório'], emotion: 'happy', text: "No GitHub do Victor encontras os códigos-fonte de todas as criações incríveis dele! Clica no ícone de GitHub no dock abaixo!" },
-            { keywords: ['spotify', 'musica', 'música', 'playlist'], emotion: 'sono', text: "O Victor adora programar a ouvir excelentes músicas no Spotify! Vê a playlist favorita dele no dock abaixo!" },
-            { keywords: ['linda', 'fofa', 'te amo', 'gatinha', 'perfeita', 'maravilhosa'], emotion: 'vergonha', text: "Aww... elogiaste-me? Deixaste-me toda corada e sem palavras... Hihi! 😳" },
-            { keywords: ['oi', 'ola', 'olá', 'tudo bem', 'eae', 'opa'], emotion: 'happy', text: "Pipuuu! Olá! Como posso ajudar-te hoje? Podes falar comigo sobre qualquer coisa!" }
-        ];
-
-        const toxicKeywords = ['bosta', 'lixo', 'feio', 'feia', 'chata', 'idiota', 'burra', 'odeio', 'pessimo', 'péssimo', 'bobo', 'boba', 'trouxa', 'puta', 'merda', 'caralho'];
-
-        async function processUserInput(text) {
-            const cleanText = text.toLowerCase().trim();
-
-            if (isBlocked) {
-                sendPipuResponse({ emotion: 'brava', text: "rsrs bloqueado hihi 🔒" });
-                return;
-            }
-
-            if (toxicKeywords.some(keyword => cleanText.includes(keyword))) {
-                isBlocked = true;
-                localStorage.setItem('pipu_blocked', 'true');
-                
-                ui.userInput.disabled = true;
-                ui.userInput.placeholder = "🔒 Acesso Bloqueado";
-                ui.userInput.classList.add('opacity-50', 'bg-red-500/10');
-                
-                sendPipuResponse({ emotion: 'brava', text: "rsrs bloqueado hihi 💢" });
-                return;
-            }
-
-            if (apiKey && apiKey.trim() !== "") {
-                ui.activeSpeechBubble.classList.remove('opacity-0', 'translate-y-4');
-                ui.activeSpeechBubble.classList.add('opacity-100', 'translate-y-0');
-                ui.speechText.innerText = "Pensando... ✨";
-                
-                try {
-                    const reply = await getGeminiResponse(text);
-                    sendPipuResponse(reply);
-                    return;
-                } catch (error) {
-                    console.error("Gemini failed, falling back to local database.", error);
-                }
-            }
-
-            for (const item of localPredefinedDatabase) {
-                if (item.keywords.some(keyword => cleanText.includes(keyword))) {
-                    sendPipuResponse(item);
-                    return;
-                }
-            }
-
-            const defaultAnswers = [
-                { emotion: 'neutral', text: "Interessante! Podes perguntar-me sobre o GitHub, Instagram ou Spotify do Victor!" },
-                { emotion: 'shocked', text: "Oh! Não tenho a certeza sobre isso. Experimenta perguntar ao Victor ou configura a minha Chave de API Gemini!" }
-            ];
-            sendPipuResponse(defaultAnswers[Math.floor(Math.random() * defaultAnswers.length)]);
-        }
-
-        function sendPipuResponse(msgObj) {
-            sendPipuMessage(msgObj);
-        }
-
-        // --- SUBMISSÃO DE TEXTO ---
-        async function handleSubmission() {
-            const text = ui.userInput.value.trim();
-            if (!text || isTyping) return;
-
-            addMessageToHistory('user', text);
-            ui.userInput.value = "";
-            isTyping = true;
-            
-            setTimeout(() => {
-                isTyping = false;
-                processUserInput(text);
-            }, 300);
-        }
-
-        ui.btnSend.addEventListener('click', handleSubmission);
-        ui.userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSubmission();
-        });
-
-        window.sendQuickQuestion = function(questionText) {
-            if (isTyping || isBlocked) return;
-            addMessageToHistory('user', questionText);
-            isTyping = true;
-            setTimeout(() => {
-                isTyping = false;
-                processUserInput(questionText);
-            }, 300);
-        };
-
-        // --- SISTEMA DE SENHA SECRETA DA ENGRENAGEM (1qaz2wsx) ---
-        const passwordModal = document.getElementById('password-modal');
-        const inputModalPassword = document.getElementById('input-modal-password');
-        const passwordErrorMsg = document.getElementById('password-error-msg');
-
-        ui.settingsToggle.addEventListener('click', () => {
-            inputModalPassword.value = "";
-            passwordErrorMsg.classList.add('opacity-0');
-            passwordModal.classList.remove('opacity-0', 'pointer-events-none');
-            inputModalPassword.focus();
-        });
-
-        document.getElementById('btn-pw-cancel').addEventListener('click', () => {
-            passwordModal.classList.add('opacity-0', 'pointer-events-none');
-        });
-
-        document.getElementById('btn-pw-unlock').addEventListener('click', validateSecretPassword);
-        inputModalPassword.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') validateSecretPassword();
-        });
-
-        function validateSecretPassword() {
-            if (inputModalPassword.value === '1qaz2wsx') {
-                passwordModal.classList.add('opacity-0', 'pointer-events-none');
-                openMainSettingsModal();
-            } else {
-                passwordErrorMsg.classList.remove('opacity-0');
-                inputModalPassword.value = "";
-                inputModalPassword.focus();
-            }
-        }
-
-        function openMainSettingsModal() {
-            initAudio();
-            const rect = ui.settingsToggle.getBoundingClientRect();
-            const originX = rect.left + rect.width / 2;
-            const originY = rect.top + rect.height / 2;
-            ui.settingsModal.style.transformOrigin = `${originX}px ${originY}px`;
-            
-            ui.modalApiKey.value = apiKey;
-            ui.modalPersonality.value = customPersonality;
-            
-            ui.settingsModal.classList.remove('opacity-0', 'pointer-events-none');
-            ui.settingsModal.classList.add('scale-100', 'opacity-100');
-            switchTab('brain');
-        }
-
-        function closeModal() {
-            const rect = ui.settingsToggle.getBoundingClientRect();
-            const originX = rect.left + rect.width / 2;
-            const originY = rect.top + rect.height / 2;
-            ui.settingsModal.style.transformOrigin = `${originX}px ${originY}px`;
-
-            ui.settingsModal.classList.add('opacity-0', 'pointer-events-none');
-            ui.settingsModal.classList.remove('scale-100', 'opacity-100');
-        }
-
-        ui.modalClose.addEventListener('click', closeModal);
-        ui.modalCancel.addEventListener('click', closeModal);
-        document.getElementById('settings-overlay').addEventListener('click', closeModal);
-
-        ui.modalSave.addEventListener('click', () => {
-            apiKey = ui.modalApiKey.value.trim();
-            customPersonality = ui.modalPersonality.value.trim();
-
-            localStorage.setItem(apiKeyLocalStorageKey, apiKey);
-            localStorage.setItem(personalityLocalStorageKey, customPersonality);
-            
-            closeModal();
-            
-            sendPipuResponse({
-                emotion: 'happy',
-                text: "Alterações guardadas com sucesso! As minhas engrenagens inteligentes foram atualizadas."
-            });
-        });
-
-        // --- SISTEMA DE MOSTRAR / ESCONDER CHAT BOX (MODO PREMIUM SIGMA) ---
-        let chatWindowActive = true;
-        function toggleChatWindow(state) {
-            chatWindowActive = state;
-            if (state) {
-                ui.draggableChat.classList.remove('opacity-0', 'pointer-events-none', 'scale-90');
-                ui.draggableChat.classList.add('opacity-100', 'scale-100');
-                ui.btnChatToggle.classList.add('text-yellow-300');
-            } else {
-                ui.draggableChat.classList.add('opacity-0', 'pointer-events-none', 'scale-90');
-                ui.draggableChat.classList.remove('opacity-100', 'scale-100');
-                ui.btnChatToggle.classList.remove('text-yellow-300');
-            }
-        }
-
-        ui.btnChatToggle.addEventListener('click', () => {
-            toggleChatWindow(!chatWindowActive);
-        });
-
-        // --- JANELA DE CONVERSA ARRASTÁVEL (DRAGGABLE WINDOW UTILITY) ---
-        function makeElementDraggable(elmnt, dragHandle) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            if (dragHandle) {
-                dragHandle.onmousedown = dragMouseDown;
-                dragHandle.ontouchstart = dragMouseDown;
-            } else {
-                elmnt.onmousedown = dragMouseDown;
-                elmnt.ontouchstart = dragMouseDown;
-            }
-
-            function dragMouseDown(e) {
-                e = e || window.event;
-                if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
-                if (e.target.style.cursor === 'se-resize') return;
-
-                const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-                
-                pos3 = clientX;
-                pos4 = clientY;
-                
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-                document.ontouchend = closeDragElement;
-                document.ontouchmove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e = e || window.event;
-                const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-                
-                pos1 = pos3 - clientX;
-                pos2 = pos4 - clientY;
-                pos3 = clientX;
-                pos4 = clientY;
-                
-                elmnt.style.top = Math.max(0, Math.min(window.innerHeight - 100, elmnt.offsetTop - pos2)) + "px";
-                elmnt.style.left = Math.max(0, Math.min(window.innerWidth - 100, elmnt.offsetLeft - pos1)) + "px";
-                
-                if (e.cancelable) e.preventDefault();
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                document.ontouchend = null;
-                document.ontouchmove = null;
-            }
-        }
-
-        makeElementDraggable(ui.draggableChat, document.getElementById("draggable-chat-header"));
-
-        // --- PICTURE-IN-PICTURE (PIP) DE ALTO DESEMPENHO ---
-        const canvas = document.getElementById('pipu-pip-canvas');
-        const video = document.getElementById('pipu-pip-video');
-        const pipCtx = canvas.getContext('2d');
-
-        function drawCanvasLoop() {
-            pipCtx.fillStyle = customBgColor;
-            pipCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-            if (layers.body.complete && layers.body.naturalWidth !== 0) pipCtx.drawImage(layers.body, 0, 0, canvas.width, canvas.height);
-            if (layers.nose.complete && layers.nose.naturalWidth !== 0) pipCtx.drawImage(layers.nose, 0, 0, canvas.width, canvas.height);
-            if (layers.eyes.complete && layers.eyes.naturalWidth !== 0) pipCtx.drawImage(layers.eyes, 0, 0, canvas.width, canvas.height);
-            if (layers.mouth.complete && layers.mouth.naturalWidth !== 0) pipCtx.drawImage(layers.mouth, 0, 0, canvas.width, canvas.height);
-            
-            requestAnimationFrame(drawCanvasLoop);
-        }
-
-        function initPiPStream() {
-            try {
-                const stream = canvas.captureStream(24);
-                video.srcObject = stream;
-                video.muted = true;
-                video.play();
-                drawCanvasLoop();
-            } catch(e) {}
-        }
-
-        document.getElementById('btn-pip').addEventListener('click', async () => {
-            initAudio();
-            try {
-                if (document.pictureInPictureElement) {
-                    await document.exitPictureInPicture();
-                } else {
-                    await video.requestPictureInPicture();
-                }
-            } catch(e) {}
-        });
-
-        // --- CONTROLE DE COR DE FUNDO ---
-        window.setBGColor = function(color) {
-            customBgColor = color;
-            document.body.style.backgroundColor = color;
-            ui.modalBgColorPicker.value = color;
-            localStorage.setItem(bgColorLocalStorageKey, color);
-        };
-
-        // --- INICIALIZAÇÃO DO SISTEMA ---
-        async function applyImageLayers() {
-            document.getElementById('pipu-loader').classList.remove('hidden');
-            
-            // Construção das referências da pasta LOCAL (sem GitHub Raw)
-            buildDefaultAssets();
-            initPersonaState();
-            refreshCharacterLayers();
-            
-            const diagnosticText = document.getElementById('diagnostic-text');
-            const diagnosticDot = document.getElementById('diagnostic-dot');
-            if (diagnosticText && diagnosticDot) {
-                diagnosticDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-                diagnosticText.innerText = `Sincronizado Localmente`;
-            }
-        }
-
-        window.onload = () => {
-            document.body.style.backgroundColor = customBgColor;
-            ui.modalBgColorPicker.value = customBgColor;
-            applyImageLayers();
-            initPiPStream();
-            toggleChatWindow(true); 
-
-            if (isBlocked) {
-                ui.userInput.disabled = true;
-                ui.userInput.placeholder = "🔒 Acesso Bloqueado";
-                ui.userInput.classList.add('opacity-50', 'bg-red-500/10');
-                setTimeout(() => {
-                    sendPipuResponse({ emotion: 'brava', text: "rsrs bloqueado hihi 🔒" });
-                }, 1000);
-            }
-        };
-    </script>
+    } catch { pipActive = false; }
+});
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+document.body.style.backgroundColor = bgColor;
+setExpr('neutral');
+if (isBlocked) { $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado'; }
+
+setTimeout(() => {
+    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu! Podes falar comigo ou clicar em mim! 💛' });
+}, 900);
+</script>
 </body>
 </html>
