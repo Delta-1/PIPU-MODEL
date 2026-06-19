@@ -43,24 +43,36 @@ input[type="file"] { display:none; }
 
 /* ── Mobile ── */
 @media (max-width:640px) {
-    #desktop-dock  { display: none !important; }
-    #mobile-dock   { display: flex !important; }
+    #desktop-dock   { display: none !important; }
+    #mobile-dock    { display: flex !important; }
+    #mobile-topbar  { display: block !important; }
+
+    /* Personagem visível entre o topbar e o dock */
+    #char {
+        height: calc(100vh - 7.5rem) !important;
+        margin-top: 3.2rem !important;
+    }
+
+    /* Chat desliza de baixo, acima do dock */
     #chat {
         top: auto !important; bottom: 5.5rem !important;
         left: 0.75rem !important; right: 0.75rem !important;
-        width: auto !important; height: 40vh !important;
+        width: auto !important; height: 42vh !important;
         min-height: 200px !important; resize: none !important;
     }
     #chat.chat-hidden { display: none !important; }
+
+    /* Widget de música acima do dock */
     #music-widget {
         left: 0.75rem !important; right: 0.75rem !important;
         bottom: 5.5rem !important; width: auto !important;
     }
+
+    /* Bolha de fala — zona central da tela */
     #speech {
-        bottom: 52vh !important; max-width: 88vw !important;
+        bottom: 46vh !important; max-width: 86vw !important;
         left: 50% !important; transform: translateX(-50%) !important;
     }
-    #char { height: 100vh !important; }
 }
 @keyframes micRing { 0%{box-shadow:0 0 0 0 rgba(250,204,21,.5)} 70%{box-shadow:0 0 0 18px rgba(250,204,21,0)} 100%{box-shadow:0 0 0 0 rgba(250,204,21,0)} }
 .mic-ring { animation: micRing 1s ease infinite; }
@@ -233,6 +245,24 @@ input[type="file"] { display:none; }
     </div>
 </div>
 
+<!-- ── MOBILE TOP BAR ── -->
+<div id="mobile-topbar" class="hidden fixed top-0 left-0 right-0 z-40 pointer-events-auto"
+     style="background:rgba(8,18,36,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07);">
+    <div class="flex items-center justify-between px-5 py-3">
+        <button onclick="document.getElementById('btn-cfg').click()"
+                class="flex items-center gap-2 text-white/55 hover:text-white active:scale-90 transition-all">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span class="text-[11px] font-semibold tracking-wide">Config</span>
+        </button>
+        <span class="text-[11px] font-bold text-white/30 tracking-widest uppercase">Pipu</span>
+        <button onclick="document.getElementById('btn-pip').click()"
+                class="flex items-center gap-2 text-white/55 hover:text-white active:scale-90 transition-all">
+            <span class="text-[11px] font-semibold tracking-wide">PiP</span>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M14 10h7v7h-7z"/></svg>
+        </button>
+    </div>
+</div>
+
 <!-- ── MOBILE DOCK ── -->
 <div id="mobile-dock" class="hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-auto"
      style="background:rgba(8,18,36,.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);padding:0.85rem 2rem 1.1rem;">
@@ -335,9 +365,9 @@ input[type="file"] { display:none; }
                     <span class="text-[10px] font-bold text-white/55 uppercase font-mono">Emoção:</span>
                     <select id="emo-sel" onchange="refreshUploadUI()" class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
                         <option value="neutral">Neutral</option><option value="happy">Feliz</option>
-                        <option value="sad">Triste</option><option value="brava">Raiva</option>
-                        <option value="shocked">Surpresa</option><option value="sono">Sono</option>
-                        <option value="vergonha">Vergonha</option>
+                        <option value="estrela">Estrela ⭐</option><option value="sad">Triste</option>
+                        <option value="brava">Raiva</option><option value="shocked">Surpresa</option>
+                        <option value="sono">Sono</option><option value="vergonha">Vergonha</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
@@ -412,6 +442,7 @@ const LS_ST  = 'pipu_state';
 const LS_BLK = 'pipu_blocked';
 
 // ── Image assets ──────────────────────────────────────────────────────────
+const EX = 'DESIGN/express%C3%B5es/'; // DESIGN/expressões/
 const A = {
     body:         'DESIGN/corpo/corpo%20padrao.png',
     nose:         'DESIGN/corpo/nariz%20padrao.png',
@@ -423,15 +454,22 @@ const A = {
     mouth_closed: 'DESIGN/boca/boca%20padrao.png',
     mouth_open:   'DESIGN/boca/sorriso.png',
     mouth_shock:  'DESIGN/boca/boca%20inesperado.png',
+    ex_vergonha:  EX+'envergonhada.png',
+    ex_estrela:   EX+'estrela.png',
+    ex_raiva:     EX+'raiva.png',
+    ex_sono:      EX+'sono.png',
+    ex_coracao:   EX+'coracao.png',
+    ex_indecisa:  EX+'indecisa.png',
 };
 const DA = {
-    neutral:  { body:A.body, nose:A.nose, eyes_open:A.eyes_neutral, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
-    happy:    { body:A.body, nose:A.nose, eyes_open:A.eyes_happy,   eyes_closed:A.eyes_closed, mouth_closed:A.mouth_open,   mouth_open:A.mouth_open,   expression:'', blush:'' },
-    sad:      { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'', blush:'' },
-    brava:    { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:'', blush:'' },
-    shocked:  { body:A.body, nose:A.nose, eyes_open:A.eyes_shocked, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:'', blush:'' },
-    sono:     { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'', blush:'' },
-    vergonha: { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'', blush:'' },
+    neutral:  { body:A.body, nose:A.nose, eyes_open:A.eyes_neutral, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:'',            blush:'' },
+    happy:    { body:A.body, nose:A.nose, eyes_open:A.eyes_happy,   eyes_closed:A.eyes_closed, mouth_closed:A.mouth_open,   mouth_open:A.mouth_open,   expression:'',            blush:'' },
+    estrela:  { body:A.body, nose:A.nose, eyes_open:A.eyes_happy,   eyes_closed:A.eyes_closed, mouth_closed:A.mouth_open,   mouth_open:A.mouth_open,   expression:A.ex_estrela,  blush:'' },
+    sad:      { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:'',            blush:'' },
+    brava:    { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:A.ex_raiva,    blush:'' },
+    shocked:  { body:A.body, nose:A.nose, eyes_open:A.eyes_shocked, eyes_closed:A.eyes_closed, mouth_closed:A.mouth_shock,  mouth_open:A.mouth_shock,  expression:'',            blush:'' },
+    sono:     { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_closed, expression:A.ex_sono,     blush:'' },
+    vergonha: { body:A.body, nose:A.nose, eyes_open:A.eyes_sad,     eyes_closed:A.eyes_closed, mouth_closed:A.mouth_closed, mouth_open:A.mouth_open,   expression:A.ex_vergonha, blush:'' },
 };
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -570,7 +608,7 @@ const DB = [
     { kw:['github','git','projeto','código','repositório'],                         emotion:'happy',    text:'Os projetos do Victor estão em github.com/Delta-1 — vai lá ver! 🚀' },
     { kw:['instagram','insta','@'],                                                 emotion:'vergonha', text:'O Instagram do Victor é @V_ctorsz! Segue ele lá! 📸' },
     { kw:['spotify','música','musica','playlist','ouvindo'],                        emotion:'sono',     text:'O Victor adora programar ouvindo música! Vê o widget do Spotify no canto! 🎵' },
-    { kw:['linda','fofa','te amo','gatinha','perfeita','bonita','gata'],            emotion:'happy',    text:'Awww! Que fofa! Isso me deixa super feliz! Obrigada! 😊✨' },
+    { kw:['linda','fofa','te amo','gatinha','perfeita','bonita','gata'],            emotion:'estrela',  text:'Awww!! Que coisa mais fofa!! Isso me deixa nas nuvens! ⭐✨' },
     { kw:['oi','olá','ola','eae','hey','bom dia','boa tarde','boa noite'],          emotion:'happy',    text:'Pipu pipu! Olá! Como posso ajudar hoje? 💛' },
     { kw:['obrigad','valeu','thanks'],                                              emotion:'happy',    text:'De nada! Fico feliz em ajudar! ✨' },
     { kw:['tchau','xau','até logo','adeus'],                                        emotion:'sad',      text:'Até logo! Vem conversar comigo quando quiser! 👋' },
@@ -633,16 +671,27 @@ document.getElementById('btn-send').addEventListener('click', submit);
 $inp.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
 function quickAsk(q) { if (isTyping || isBlocked) return; $inp.value = q; submit(); }
 
-// ── Avatar click ──────────────────────────────────────────────────────────
-const CLICKS = [
-    { emotion:'shocked',  text:'Ei! Fizeste-me cócegas! 😲' },
-    { emotion:'vergonha', text:'Ahh! Fico envergonhada! 😳' },
-    { emotion:'happy',    text:'Hihi! Pipu pipu! ✨' },
-    { emotion:'brava',    text:'Pára! Não gosto disso! 😤' },
-];
+// ── Avatar click → ativa microfone ────────────────────────────────────────
 function avatarClick() {
-    if (isTyping || isBlocked) return;
-    initAudio(); speak(CLICKS[Math.floor(Math.random() * CLICKS.length)]);
+    if (isBlocked) return;
+    initAudio();
+    if (isTyping) {
+        speak({ emotion:'neutral', text:'pq está me tocando? 🤔' });
+        return;
+    }
+    speak({ emotion:'neutral', text:'sim? 😊' });
+    // Ativa o mic após a Pipu terminar de falar
+    setTimeout(() => {
+        if (isTyping || micOn) return;
+        if (rec) {
+            micOn = true; $btnMic.classList.add('mic-active');
+            try { rec.start(); } catch {}
+            // Sincroniza botão mobile
+            mobMicOn = true;
+            const mb = document.getElementById('mob-mic-btn');
+            if (mb) { mb.classList.add('mic-ring','bg-red-500'); mb.classList.remove('bg-yellow-400'); }
+        }
+    }, 900);
 }
 
 // ── Microphone (Web Speech API) ───────────────────────────────────────────
