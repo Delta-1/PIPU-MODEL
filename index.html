@@ -483,43 +483,8 @@
 
         // --- SISTEMA DIRECTO LOCAL DE HOSPEDAGEM (Caminhos Relativos!) ---
         // Como o site vai ser hospedado juntamente com a pasta DESIGN, os caminhos devem apontar para a raiz.
-        // Já não precisas de GitHub Raw. O browser vai ler da tua própria pasta!
+        // O sistema lê e carrega diretamente e de forma limpa os teus ficheiros .png
         const LOCAL_BASE_PATH = "DESIGN/";
-
-        // Utilitário para lidar com tentativas de carregamento de URLs (tenta PNG primeiro, se falhar tenta SVG, se falhar ignora para usar fallback css)
-        async function robustLocalLoad(imgElement, folder, fileBase) {
-            const pngPath = `${LOCAL_BASE_PATH}${folder}/${fileBase}.png`;
-            const svgPath = `${LOCAL_BASE_PATH}${folder}/${fileBase}.svg`;
-
-            // Tenta carregar o PNG local
-            let success = await checkImage(pngPath);
-            if (success) {
-                imgElement.src = pngPath;
-                handleImageLoad(imgElement);
-                return pngPath;
-            }
-
-            // Fallback para SVG se o PNG não existir
-            success = await checkImage(svgPath);
-            if (success) {
-                imgElement.src = svgPath;
-                handleImageLoad(imgElement);
-                return svgPath;
-            }
-
-            // Usa o error handler nativo se as duas falharem
-            handleImageError(imgElement);
-            return null;
-        }
-
-        function checkImage(url) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.src = url;
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-            });
-        }
 
         // URLs base conhecidos para a navegação LOCAL
         const defaultLocalAssets = {
@@ -776,40 +741,28 @@
             currentEmotion = emotion;
             const currentEmotionAssets = personaState[emotion] || personaState.neutral || defaultLocalAssets.neutral;
 
-            async function applyOrRobustLocalLoad(element, srcVal, fallbackFolder, fallbackFile) {
+            function applyDirectLocalLoad(element, srcVal) {
                 if (!srcVal) return;
                 
-                // Se for URL custom ou base64 carregado via Veadotube/Upload, aplica direto
-                if (srcVal.startsWith('data:')) {
-                    element.src = srcVal;
-                    handleImageLoad(element);
-                } else {
-                    // É um URL Local (ex: DESIGN/corpo/corpo_padrao.png)
-                    // Vamos tentar carregar localmente testando se existe PNG e depois SVG
-                    element.src = srcVal.replace('.svg', '.png'); 
-                    element.onerror = function() {
-                        if(this.src.endsWith('.png')){
-                            this.src = this.src.replace('.png', '.svg');
-                        } else {
-                            handleImageError(this);
-                        }
-                    };
-                    element.onload = function() { handleImageLoad(this); };
-                }
+                // Aplica o src diretamente: Base64 do upload ou o caminho PNG da pasta local.
+                // Sem fallbacks que causem falsos erros na consola!
+                element.src = srcVal;
+                element.onload = function() { handleImageLoad(this); };
+                element.onerror = function() { handleImageError(this); };
             }
 
-            applyOrRobustLocalLoad(layers.body, currentEmotionAssets.body, "corpo", "corpo_padrao");
-            applyOrRobustLocalLoad(layers.nose, currentEmotionAssets.nose, "nariz", "nariz");
+            applyDirectLocalLoad(layers.body, currentEmotionAssets.body);
+            applyDirectLocalLoad(layers.nose, currentEmotionAssets.nose);
             
             const eyesAsset = isBlinking ? (currentEmotionAssets.eyes_closed || personaState.neutral.eyes_closed) : (currentEmotionAssets.eyes_open || personaState.neutral.eyes_open);
-            applyOrRobustLocalLoad(layers.eyes, eyesAsset, "olhos", isBlinking ? "fechado" : "padrao");
+            applyDirectLocalLoad(layers.eyes, eyesAsset);
 
             const mouthAsset = isTalking ? (currentEmotionAssets.mouth_open || personaState.neutral.mouth_open) : (currentEmotionAssets.mouth_closed || personaState.neutral.mouth_closed);
-            applyOrRobustLocalLoad(layers.mouth, mouthAsset, "boca", isTalking ? "sorriso" : "padrao");
+            applyDirectLocalLoad(layers.mouth, mouthAsset);
 
             // Expressão Extra
             if (currentEmotionAssets.expression) {
-                applyOrRobustLocalLoad(layers.expression, currentEmotionAssets.expression, "expressoes", "");
+                applyDirectLocalLoad(layers.expression, currentEmotionAssets.expression);
                 layers.expression.classList.remove('hidden');
             } else {
                 layers.expression.classList.add('hidden');
@@ -817,7 +770,7 @@
 
             // Blush
             if (currentEmotionAssets.blush) {
-                applyOrRobustLocalLoad(layers.blush, currentEmotionAssets.blush, "expressoes", "envergonhada");
+                applyDirectLocalLoad(layers.blush, currentEmotionAssets.blush);
                 layers.blush.classList.remove('hidden');
             } else {
                 layers.blush.classList.add('hidden');
