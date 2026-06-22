@@ -637,6 +637,35 @@ input[type="file"] { display:none; }
 // ── Proxy seguro: a chave da Gemini fica só no servidor (Supabase Edge Function) ──
 const GEMINI_PROXY_URL = 'https://yfqzoukrjatcgmyshtpz.supabase.co/functions/v1/pipu-gemini';
 
+// ── Memória persistente (Supabase): tudo que a Pipu pesquisa/aprende fica salvo aqui ──
+const SUPABASE_URL = 'https://yfqzoukrjatcgmyshtpz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmcXpvdWtyamF0Y2dteXNodHB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTgyMjMsImV4cCI6MjA5NzUzNDIyM30.GBbEwI-1AnrJ6kllFrXkjTc1Bf76bGz8d8TGnaiYoAw';
+const MEMORY_URL = SUPABASE_URL + '/rest/v1/pipu_memory';
+let pipuMemories = [];
+
+async function loadMemories() {
+    try {
+        const res = await fetch(`${MEMORY_URL}?select=content&order=created_at.desc&limit=15`, {
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        });
+        if (res.ok) pipuMemories = (await res.json()).map(r => r.content);
+    } catch {}
+}
+loadMemories();
+
+async function saveMemory(content, source = 'manual', query = null) {
+    if (!content) return;
+    pipuMemories.unshift(content);
+    pipuMemories = pipuMemories.slice(0, 15);
+    try {
+        await fetch(MEMORY_URL, {
+            method: 'POST',
+            headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+            body: JSON.stringify({ content: content.slice(0, 3900), source, query }),
+        });
+    } catch {}
+}
+
 // ── Victor's info (carregado de ficheiros no GitHub + fallback hardcoded) ──
 const VICTOR_FALLBACK = `
 Sobre Victor (teu criador):
@@ -922,6 +951,7 @@ async function process(text) {
     const t = text.toLowerCase().trim();
     if (isBlocked) { speak({ emotion:'brava', text:'Acesso bloqueado! 🔒' }); return; }
     if (t.startsWith('/api')) { handleApiCommand(text); return; }
+    if (t.startsWith('/lembrar')) { handleLembrarCommand(text); return; }
     if (TOXIC.some(w => t.includes(w))) {
         isBlocked = true; localStorage.setItem(LS_BLK,'true');
         $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado';
@@ -949,6 +979,14 @@ function handleApiCommand(text) {
     speak({ emotion:'estrela', text:'Chave salva! A partir de agora vou usar a SUA API neste navegador, em vez da padrão. Manda "/api remover" pra voltar atrás. 🔑✨' });
 }
 
+// ── /lembrar — guarda algo na memória permanente da Pipu (Supabase) ────────
+function handleLembrarCommand(text) {
+    const arg = text.slice(text.toLowerCase().indexOf('/lembrar') + 8).trim();
+    if (!arg) { speak({ emotion:'neutral', text:'Manda assim: "/lembrar <coisa que eu devo guardar na memória>" 🧠' }); return; }
+    saveMemory(arg, 'manual');
+    speak({ emotion:'estrela', text:'Anotado! Vou guardar isso na minha memória pra sempre! 🧠💾' });
+}
+
 // ── Gemini API (com pesquisa no Google + fontes) ───────────────────────────
 const EMOTIONS = ['neutral','happy','sad','brava','shocked','sono','vergonha'];
 
@@ -959,7 +997,10 @@ async function callGemini(query, imageBase64 = null, opts = {}) {
     const guideMode = opts.guide
         ? '\n\nMODO GUIA DE TELA: Você está vendo a tela do usuário em tempo real e ele pode estar falando contigo por voz. Aja como uma super amiga que ensina: descreva rapidamente o que vê, e se o usuário parecer perdido, travado ou perguntar "o que eu faço", dê uma instrução BEM clara e direta de próximo passo (ex.: "clica no botão azul no canto superior direito", "abre o YouTube e digita X na busca", "entra em gov.br e procura por Y"). Pode cobrar com bom humor se a pessoa não conseguir achar algo simples ("ô, tá bem na sua frente, ólha de novo! 😄"), mas sem ser grossa.'
         : '';
-    const sys = `${pipuPersonality}\n\n${victorInfo}${victorMode}${guideMode}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você é livre para falar sobre QUALQUER assunto com QUALQUER pessoa: notícias, curiosidades, dúvidas técnicas, tarefas do dia a dia, piadas, o que for.\n- Quando a pergunta pedir informação que pode mudar com o tempo (notícias, preços, eventos, fatos específicos, "o que é X", "quem foi Y"), PESQUISE com a ferramenta de busca disponível antes de responder, e baseie a resposta no que encontrar.\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Aja como uma "super amiga" que ensina: explique de forma simples, e se notar que a pessoa não entendeu ou não sabe o próximo passo, pergunte e ajude até ela conseguir, com bom humor.\n- Respostas curtas e naturais (máx 2-3 frases, exceto quando a pessoa pedir explicação detalhada). Sem formalidade.\n- IMPORTANTE: a resposta deve começar OBRIGATORIAMENTE com uma tag de emoção entre colchetes duplos, escolhendo só uma entre: [[neutral]] [[happy]] [[sad]] [[brava]] [[shocked]] [[sono]] [[vergonha]]. Depois da tag, escreva a resposta normalmente, sem repetir a tag.`;
+    const memoryBlock = pipuMemories.length
+        ? `\n\nMEMÓRIA (coisas que você já aprendeu/pesquisou antes — use se for relevante, mas não repita ipsis verbis):\n- ${pipuMemories.join('\n- ')}`
+        : '';
+    const sys = `${pipuPersonality}\n\n${victorInfo}${victorMode}${guideMode}${memoryBlock}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você é livre para falar sobre QUALQUER assunto com QUALQUER pessoa: notícias, curiosidades, dúvidas técnicas, tarefas do dia a dia, piadas, o que for.\n- Quando a pergunta pedir informação que pode mudar com o tempo (notícias, preços, eventos, fatos específicos, "o que é X", "quem foi Y"), PESQUISE com a ferramenta de busca disponível antes de responder, e baseie a resposta no que encontrar.\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Aja como uma "super amiga" que ensina: explique de forma simples, e se notar que a pessoa não entendeu ou não sabe o próximo passo, pergunte e ajude até ela conseguir, com bom humor.\n- Respostas curtas e naturais (máx 2-3 frases, exceto quando a pessoa pedir explicação detalhada). Sem formalidade.\n- IMPORTANTE: a resposta deve começar OBRIGATORIAMENTE com uma tag de emoção entre colchetes duplos, escolhendo só uma entre: [[neutral]] [[happy]] [[sad]] [[brava]] [[shocked]] [[sono]] [[vergonha]]. Depois da tag, escreva a resposta normalmente, sem repetir a tag.`;
     const parts = [{ text: query }];
     if (imageBase64) parts.push({ inline_data:{ mime_type:'image/jpeg', data:imageBase64 } });
     const body = {
@@ -982,6 +1023,7 @@ async function callGemini(query, imageBase64 = null, opts = {}) {
     const seen = new Set();
     const sources = chunks.map(c => c.web).filter(w => w && w.uri && !seen.has(w.uri) && seen.add(w.uri))
                            .map(w => ({ title: w.title || w.uri, uri: w.uri }));
+    if (sources.length) saveMemory(`Pergunta: "${query}" — Resposta: "${text}"`, 'pesquisa', query);
     return { emotion, text, sources };
 }
 
