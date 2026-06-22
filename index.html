@@ -87,10 +87,14 @@ input[type="file"] { display:none; }
     /* Respeita notch / status bar / home indicator (iOS & Android) */
     #mobile-topbar { padding-top: env(safe-area-inset-top, 0px); }
 
-    /* Personagem: maior, ocupando quase toda a tela abaixo da topbar (dock agora é um FAB flutuante) */
+    /* Personagem: maior, ocupando quase toda a tela abaixo da topbar e acima da barra inferior fixa.
+       A altura reserva o espaço da #mob-bar (senão o corpo/pescoço dela fica por baixo da barra);
+       o transform amplia a partir do próprio rodapé da caixa, então ela cresce pra cima sem voltar a invadir a barra. */
     #char {
-        height: calc(100dvh - 6.5rem - env(safe-area-inset-bottom,0px)) !important;
+        height: calc(100dvh - 6.5rem - 4.6rem - env(safe-area-inset-bottom,0px)) !important;
         margin-top: calc(6rem + env(safe-area-inset-top,0px)) !important;
+        transform: scale(1.18);
+        transform-origin: bottom center;
     }
 
     /* Chat: estilo WhatsApp — header fixo no topo, mensagens no meio, input fixo embaixo */
@@ -195,8 +199,42 @@ input[type="file"] { display:none; }
     box-shadow: 0 3px 8px rgba(0,0,0,.4);
 }
 #pip-sim-caption {
-    font-size: 10.5px; line-height: 1.25; color: #fff; margin-top: 5px;
+    font-size: 10.5px; line-height: 1.25; color: #fcd34d; margin-top: 5px;
     max-height: 3.5em; overflow: hidden;
+}
+#pip-sim-mic-dot {
+    position: absolute; top: 6px; left: 6px; width: 9px; height: 9px; border-radius: 999px;
+    background: rgba(255,255,255,.25); transition: background .2s;
+}
+#pip-sim-mic-dot.on { background: #ef4444; }
+#pip-hint-dot.mic-on { background-color: #f87171 !important; }
+
+/* Aba de chat flutuante, disponível enquanto o PiP estiver ativo (clica para falar com a Pipu por texto) */
+#pip-chat-tab {
+    position: fixed; bottom: 6.2rem; right: 1rem; z-index: 71;
+    display: flex; flex-direction: column; align-items: flex-end; gap: .4rem;
+}
+#pip-chat-tab.hidden { display: none; }
+#pip-chat-tab-toggle {
+    width: 2.6rem; height: 2.6rem; border-radius: 999px; background: #fcd34d; color: #1a1a2e;
+    display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,.4); touch-action: manipulation;
+}
+#pip-chat-tab-box {
+    display: none; align-items: center; gap: .35rem;
+    background: rgba(8,18,36,.9); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: .35rem .4rem .35rem .9rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,.4); width: min(78vw, 260px);
+}
+#pip-chat-tab.open #pip-chat-tab-box { display: flex; }
+#pip-chat-tab-input {
+    flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    color: #fff; font-size: 13px;
+}
+#pip-chat-tab-input::placeholder { color: rgba(255,255,255,.4); }
+#pip-chat-tab-send {
+    width: 1.9rem; height: 1.9rem; border-radius: 999px; background: #fcd34d; color: #1a1a2e;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .8rem;
 }
 </style>
 </head>
@@ -215,20 +253,31 @@ input[type="file"] { display:none; }
 <canvas id="pip-c" width="400" height="400" class="hidden" style="position:absolute"></canvas>
 <video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
 
-<!-- PiP status hint -->
-<div id="pip-hint" class="hidden fixed top-4 right-4 z-50 pointer-events-none select-none">
-    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold tracking-widest"
+<!-- PiP status hint — clicável: liga/desliga o microfone para falar com a Pipu -->
+<div id="pip-hint" class="hidden fixed top-4 right-4 z-50 select-none cursor-pointer" title="Clica para falar com a Pipu">
+    <div id="pip-hint-box" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold tracking-widest"
          style="color:#fcd34d;background:rgba(8,18,36,.7);border-color:rgba(252,211,77,.25);backdrop-filter:blur(10px);">
-        <span class="w-1.5 h-1.5 rounded-full bg-red-400 now-dot inline-block"></span>
-        PiP: vendo a tela + ouvindo
+        <span id="pip-hint-dot" class="w-1.5 h-1.5 rounded-full bg-white/30 inline-block"></span>
+        <span id="pip-hint-label">PiP: vendo a tela — clica pra falar</span>
     </div>
 </div>
 
-<!-- PiP simulado: painel flutuante arrastável, usado no celular onde o PiP nativo não funciona com canvas -->
+<!-- PiP simulado: painel flutuante arrastável, usado no celular onde o PiP nativo não funciona com canvas.
+     Clicar nele liga/desliga o microfone para falar com a Pipu. -->
 <div id="pip-sim" class="hidden">
     <button id="pip-sim-close" title="Fechar PiP">✕</button>
+    <span id="pip-sim-mic-dot" title="Clica para falar com a Pipu"></span>
     <canvas id="pip-sim-c" width="120" height="120"></canvas>
     <div id="pip-sim-caption"></div>
+</div>
+
+<!-- Aba de chat flutuante: digitar pra Pipu enquanto o PiP estiver ativo -->
+<div id="pip-chat-tab" class="hidden">
+    <div id="pip-chat-tab-box">
+        <input id="pip-chat-tab-input" type="text" placeholder="Fala com a Pipu..." autocomplete="off">
+        <button id="pip-chat-tab-send" title="Enviar">➤</button>
+    </div>
+    <button id="pip-chat-tab-toggle" title="Falar com a Pipu por texto">💬</button>
 </div>
 
 <!-- Screen capture (hidden) -->
@@ -1078,9 +1127,12 @@ const _origProcess = process;
 
 // ── Chat show/hide ────────────────────────────────────────────────────────
 function showChat(on) {
+    $chat.classList.toggle('chat-hidden', !on);
     $chat.style.opacity    = on ? '1' : '0';
     $chat.style.transform  = on ? 'scale(1)' : 'scale(.94)';
     $chat.style.pointerEvents = on ? '' : 'none';
+    document.getElementById('mob-chat-btn')?.classList.toggle('active', on);
+    if (on) document.getElementById('music-widget').classList.add('off');
 }
 
 // ── Drag chat ─────────────────────────────────────────────────────────────
@@ -1444,7 +1496,7 @@ function drawPipCaption() {
     const boxH = lines.length * lineH + 2*pad;
     pipCtx.fillStyle = 'rgba(8,18,36,.78)';
     pipCtx.fillRect(0, pipC.height - boxH, pipC.width, boxH);
-    pipCtx.fillStyle = '#fff';
+    pipCtx.fillStyle = '#fcd34d';
     lines.forEach((l,i) => pipCtx.fillText(l, pad, pipC.height - boxH + pad + (i+1)*lineH - 5));
 }
 function setPipCaption(text) { pipCaption = text; }
@@ -1472,10 +1524,28 @@ function startPipMic() {
     pipRec.onend = () => { if (pipActive && pipMicActive) { try { pipRec.start(); } catch {} } };
     pipRec.onerror = () => {};
     try { pipRec.start(); pipMicActive = true; } catch { pipMicActive = false; }
+    syncPipMicUi();
 }
 function stopPipMic() {
     pipMicActive = false;
     if (pipRec) { pipRec.onend = null; try { pipRec.stop(); } catch {} pipRec = null; }
+    syncPipMicUi();
+}
+// Clicar no painel/hint do PiP liga ou desliga o microfone — push-to-talk, em vez de ficar sempre ouvindo
+function togglePipMic() {
+    markInteraction();
+    if (pipMicActive) {
+        stopPipMic();
+    } else {
+        startPipMic();
+        speak({ emotion:'happy', text:'Tô ouvindo! Fala comigo 🎤' });
+    }
+}
+function syncPipMicUi() {
+    document.getElementById('pip-sim-mic-dot')?.classList.toggle('on', pipMicActive);
+    document.getElementById('pip-hint-dot')?.classList.toggle('mic-on', pipMicActive);
+    const label = document.getElementById('pip-hint-label');
+    if (label) label.textContent = pipMicActive ? 'PiP: vendo a tela + ouvindo' : 'PiP: vendo a tela — clica pra falar';
 }
 
 async function handlePipVoiceQuery(text) {
@@ -1503,6 +1573,8 @@ function stopPipMode() {
     clearInterval(visionTimer); visionTimer = null;
     $pipHint.classList.add('hidden');
     hidePipSim();
+    document.getElementById('pip-chat-tab').classList.add('hidden');
+    document.getElementById('pip-chat-tab').classList.remove('open');
 }
 pipV.addEventListener('leavepictureinpicture', stopPipMode);
 
@@ -1527,6 +1599,26 @@ function hidePipSim() {
     clearInterval(pipSimTimer); pipSimTimer = null;
 }
 document.getElementById('pip-sim-close').addEventListener('click', (e) => { e.stopPropagation(); stopPipMode(); });
+// Clicar dentro do painel (mas não no X) liga/desliga o microfone
+document.getElementById('pip-sim-c').addEventListener('click', (e) => { e.stopPropagation(); togglePipMic(); });
+document.getElementById('pip-sim-mic-dot').addEventListener('click', (e) => { e.stopPropagation(); togglePipMic(); });
+$pipHint.addEventListener('click', () => togglePipMic());
+
+// ── Aba de chat flutuante do PiP ────────────────────────────────────────────
+const $pipChatTab = document.getElementById('pip-chat-tab');
+const $pipChatInput = document.getElementById('pip-chat-tab-input');
+document.getElementById('pip-chat-tab-toggle').addEventListener('click', () => {
+    $pipChatTab.classList.toggle('open');
+    if ($pipChatTab.classList.contains('open')) $pipChatInput.focus();
+});
+function sendPipChatTab() {
+    const text = $pipChatInput.value.trim();
+    if (!text) return;
+    $pipChatInput.value = '';
+    handlePipVoiceQuery(text);
+}
+document.getElementById('pip-chat-tab-send').addEventListener('click', sendPipChatTab);
+$pipChatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendPipChatTab(); });
 
 // Arrastar o painel (mouse + touch)
 (() => {
@@ -1563,9 +1655,10 @@ document.getElementById('btn-pip').addEventListener('click', async () => {
         } else {
             pipActive = true;
             await startPipScreenShare();
-            startPipMic();
             drawPip();
-            speak({ emotion:'happy', text:'Modo PiP ativo! Tô vendo a tua tela e ouvindo o microfone — me chama que eu te ajudo a achar o caminho! 👀🎤' });
+            syncPipMicUi();
+            speak({ emotion:'happy', text:'Modo PiP ativo! Tô vendo a tua tela — clica em mim ou no balão de chat quando quiser falar comigo! 👀💬' });
+            document.getElementById('pip-chat-tab').classList.remove('hidden');
             if (usesNativePip) {
                 $pipHint.classList.remove('hidden');
                 await pipV.requestPictureInPicture();
@@ -1579,13 +1672,8 @@ document.getElementById('btn-pip').addEventListener('click', async () => {
 // ── Mobile controls ───────────────────────────────────────────────────────
 let mobMicOn = false;
 function mobileChatToggle() {
-    const visible = !$chat.classList.contains('chat-hidden');
-    $chat.classList.toggle('chat-hidden', visible);
-    showChat(!visible); // sincroniza opacity/transform/pointer-events com a nova visibilidade
-    // fechar music widget se chat abriu (tela pequena)
-    if (!visible) document.getElementById('music-widget').classList.add('off');
-    const btn = document.getElementById('mob-chat-btn');
-    btn.classList.toggle('active', !visible);
+    const opening = $chat.classList.contains('chat-hidden');
+    showChat(opening); // showChat já sincroniza a classe chat-hidden, opacity/transform e o botão
 }
 function mobileToggleMic() {
     if (!rec) { speak({ emotion:'sad', text:'Microfone não disponível neste browser 😢' }); return; }
