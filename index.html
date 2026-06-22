@@ -602,15 +602,17 @@ function chirp() {
     try {
         initAudio();
         const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'square';
-        // Tom varia com a letra atual -> dá a sensação de "fala" tipo Animal Crossing/Celeste
-        const base = [340,380,420,460,500,540,580,620][Math.floor(Math.random()*8)];
+        osc.type = 'sine';
+        // Tom varia com a letra atual, subindo de leve -> bip fofo tipo Animal Crossing
+        const notes = [520, 580, 640, 700, 760, 820, 880];
+        const base = notes[Math.floor(Math.random() * notes.length)];
         osc.frequency.setValueAtTime(base, now);
-        osc.frequency.exponentialRampToValueAtTime(base * 0.82, now + 0.05);
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+        osc.frequency.exponentialRampToValueAtTime(base * 1.18, now + 0.045);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.075, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(now); osc.stop(now + 0.055);
+        osc.start(now); osc.stop(now + 0.085);
     } catch {}
 }
 
@@ -1023,6 +1025,14 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.addEventListener('pause', () => { document.getElementById('pl-icon').innerHTML = '<path d="M8 5v14l11-7z"/>'; });
     audio.addEventListener('ended', resetPlayerUI);
 });
+
+// Navegadores bloqueiam autoplay de áudio antes de um gesto do usuário —
+// na primeira interação, tenta retomar a prévia da música se ela ficou pausada por isso.
+document.addEventListener('click', function unlockMusicAutoplay() {
+    const audio = $plAudio();
+    if (audio && audio.src && audio.paused) audio.play().catch(() => {});
+    document.removeEventListener('click', unlockMusicAutoplay);
+}, { once: true });
 
 function toggleMusic(forceClose) {
     const w = document.getElementById('music-widget');
