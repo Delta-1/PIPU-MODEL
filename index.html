@@ -563,9 +563,10 @@ async function loadPersonalityFiles() {
 }
 
 // ── Storage keys ──────────────────────────────────────────────────────────
-const LS_BG  = 'pipu_bg';
-const LS_ST  = 'pipu_state';
-const LS_BLK = 'pipu_blocked';
+const LS_BG    = 'pipu_bg';
+const LS_ST    = 'pipu_state';
+const LS_BLK   = 'pipu_blocked';
+const LS_USERKEY = 'pipu_user_gemini_key';
 
 // ── Image assets ──────────────────────────────────────────────────────────
 const EX = 'DESIGN/express%C3%B5es/'; // DESIGN/expressões/
@@ -749,6 +750,7 @@ const TOXIC = ['idiota','burra','odeio','bosta','merda','caralho','puta','lixo',
 async function process(text) {
     const t = text.toLowerCase().trim();
     if (isBlocked) { speak({ emotion:'brava', text:'Acesso bloqueado! 🔒' }); return; }
+    if (t.startsWith('/api')) { handleApiCommand(text); return; }
     if (TOXIC.some(w => t.includes(w))) {
         isBlocked = true; localStorage.setItem(LS_BLK,'true');
         $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado';
@@ -760,6 +762,20 @@ async function process(text) {
     catch (e) { $speech.classList.add('off'); isTyping = false; }
     for (const item of DB) { if (item.kw.some(k => t.includes(k))) { speak(item); return; } }
     speak({ emotion:'happy', text:'Hmm, não tenho certeza sobre isso! Mas pode me perguntar sobre o Victor, os projetos dele no GitHub, ou qualquer coisa! ✨' });
+}
+
+// ── /api — usa a chave Gemini do próprio usuário, só neste navegador ────────
+// Guardada no localStorage, nunca enviada a ninguém além do nosso proxy (que
+// a repassa direto pro Google em vez de usar a chave compartilhada).
+function handleApiCommand(text) {
+    const arg = text.slice(text.toLowerCase().indexOf('/api') + 4).trim();
+    if (!arg || /^(remover|limpar|sair|reset)$/i.test(arg)) {
+        localStorage.removeItem(LS_USERKEY);
+        speak({ emotion:'happy', text:'Pronto, voltei a usar a chave padrão neste navegador! 🔄' });
+        return;
+    }
+    localStorage.setItem(LS_USERKEY, arg);
+    speak({ emotion:'estrela', text:'Chave salva! A partir de agora vou usar a SUA API neste navegador, em vez da padrão. Manda "/api remover" pra voltar atrás. 🔑✨' });
 }
 
 // ── Gemini API (com pesquisa no Google + fontes) ───────────────────────────
@@ -780,7 +796,10 @@ async function callGemini(query, imageBase64 = null, opts = {}) {
         systemInstruction: { parts:[{ text:sys }] },
         tools: [{ google_search:{} }],
     };
-    const res = await fetch(GEMINI_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const userKey = localStorage.getItem(LS_USERKEY);
+    const headers = { 'Content-Type':'application/json' };
+    if (userKey) headers['x-gemini-key'] = userKey;
+    const res = await fetch(GEMINI_PROXY_URL, { method:'POST', headers, body:JSON.stringify(body) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const cand = data.candidates[0];
