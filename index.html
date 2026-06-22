@@ -57,41 +57,83 @@ input[type="file"] { display:none; }
 
     /* Respeita notch / status bar / home indicator (iOS & Android) */
     #mobile-topbar { padding-top: env(safe-area-inset-top, 0px); }
-    #mobile-dock   { padding-bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px)) !important; }
 
-    /* Personagem: entre topbar (~6.5rem) e dock (~5.5rem) */
+    /* Personagem: maior, ocupando quase toda a tela abaixo da topbar (dock agora é um FAB flutuante) */
     #char {
-        height: calc(100dvh - 12rem - env(safe-area-inset-bottom,0px)) !important;
-        margin-top: calc(6.5rem + env(safe-area-inset-top,0px)) !important;
+        height: calc(100dvh - 6.5rem - env(safe-area-inset-bottom,0px)) !important;
+        margin-top: calc(6rem + env(safe-area-inset-top,0px)) !important;
     }
 
-    /* Chat: canto inferior esquerdo acima do dock */
+    /* Chat: estilo WhatsApp, ocupa a tela quase inteira quando aberto */
     #chat {
-        top: auto !important; bottom: calc(5.5rem + env(safe-area-inset-bottom,0px)) !important;
-        left: 0.75rem !important; right: auto !important;
-        width: calc(100vw - 1.5rem) !important;
-        max-width: 330px !important;
-        height: 42dvh !important;
-        min-height: 180px !important; resize: none !important;
+        top: auto !important; bottom: 0 !important;
+        left: 0 !important; right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 78dvh !important;
+        min-height: unset !important; resize: none !important;
+        border-radius: 18px 18px 0 0 !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     }
     #chat.chat-hidden { display: none !important; }
+    /* Esconde o FAB enquanto o chat estiver aberto em tela cheia */
+    #chat:not(.chat-hidden) ~ #mobile-dock { display: none !important; }
+
+    /* Cabeçalho do chat com cara de app de mensagens */
+    #chat-hdr { background: rgba(20,40,30,.55) !important; padding-top: calc(0.65rem + env(safe-area-inset-top, 0px)) !important; }
 
     /* Bolha de fala */
     #speech {
-        bottom: 44dvh !important; max-width: 86vw !important;
+        bottom: 30dvh !important; max-width: 86vw !important;
         left: 50% !important; transform: translateX(-50%) !important;
+    }
+
+    /* ── Botão flutuante (FAB) no canto inferior direito, substitui a barra de dock ── */
+    #mobile-dock {
+        display: block !important;
+        position: fixed; bottom: 0; left: 0; right: 0; top: 0;
+        background: transparent; border-top: none; padding: 0;
+        pointer-events: none; z-index: 45;
+    }
+    #mob-fab-wrap {
+        position: absolute;
+        right: 1.1rem;
+        bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
+        display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+        pointer-events: auto;
+    }
+    #mob-fab-menu {
+        display: flex; flex-direction: column; align-items: center; gap: 0.65rem;
+        opacity: 0; transform: translateY(12px) scale(.85);
+        pointer-events: none; transition: opacity .22s ease, transform .22s ease;
+    }
+    #mob-fab-wrap.open #mob-fab-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    #mob-fab-wrap.open #mob-fab-main { transform: rotate(45deg); }
+    .mob-fab-item {
+        width: 3.1rem; height: 3.1rem; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(8,18,36,.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,.12); box-shadow: 0 6px 18px rgba(0,0,0,.35);
+        color: rgba(255,255,255,.75); touch-action: manipulation;
+    }
+    .mob-fab-item.active { background: #ef4444; color: #fff; }
+    #mob-fab-main {
+        width: 3.7rem; height: 3.7rem; border-radius: 999px;
+        background: #fcd34d; color: #1a1a2e;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        transition: transform .22s ease; touch-action: manipulation;
     }
 
     /* Alvos de toque maiores e mais "respiráveis" em telas pequenas */
     .dock-btn { padding: 12px; min-width: 44px; min-height: 44px; }
-    #mob-chat-btn, #mob-mic-btn { touch-action: manipulation; }
 }
 
 /* Telemóvel pequeno em modo paisagem: dock/topbar mais finos para sobrar espaço */
 @media (max-width:1024px) and (orientation:landscape) and (max-height:480px) {
-    #char { height: calc(100dvh - 8rem - env(safe-area-inset-bottom,0px)) !important; margin-top: 4.5rem !important; }
+    #char { height: calc(100dvh - 5rem - env(safe-area-inset-bottom,0px)) !important; margin-top: 4.2rem !important; }
     #mob-music-bar { display:none !important; }
-    #mob-mic-btn { width:3.2rem !important; height:3.2rem !important; }
+    #mob-fab-main, .mob-fab-item { width: 2.9rem !important; height: 2.9rem !important; }
 }
 
 @keyframes micRing { 0%{box-shadow:0 0 0 0 rgba(250,204,21,.5)} 70%{box-shadow:0 0 0 18px rgba(250,204,21,0)} 100%{box-shadow:0 0 0 0 rgba(250,204,21,0)} }
@@ -154,7 +196,7 @@ input[type="file"] { display:none; }
 
 <!-- ── CHAT WINDOW ── -->
 <div id="chat"
-     class="absolute top-5 left-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10"
+     class="absolute top-5 left-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10 chat-hidden"
      style="width:330px;height:44vh;min-width:260px;min-height:250px;resize:both;overflow:hidden;transition:opacity .25s ease,transform .25s ease;">
     <div id="chat-hdr" class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move shrink-0 select-none" style="background:rgba(0,0,0,.18);">
         <div class="flex gap-1.5">
@@ -325,35 +367,30 @@ input[type="file"] { display:none; }
     </div>
 </div>
 
-<!-- ── MOBILE DOCK ── -->
-<div id="mobile-dock" class="hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-auto"
-     style="background:rgba(8,18,36,.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.08);padding:0.85rem 2rem 1.1rem;">
-    <div class="flex items-center justify-between max-w-xs mx-auto">
-
-        <!-- Chat toggle -->
-        <button id="mob-chat-btn" onclick="mobileChatToggle()" class="flex flex-col items-center gap-1 text-white/50 active:scale-90 transition-all">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span class="text-[9px] font-semibold tracking-wide uppercase">Chat</span>
+<!-- ── MOBILE FAB (substitui a barra de dock) ── -->
+<div id="mobile-dock" class="hidden">
+    <div id="mob-fab-wrap" onclick="event.stopPropagation();">
+        <!-- Menu expandido: Música / Mic / Chat -->
+        <div id="mob-fab-menu">
+            <button onclick="toggleMusic()" class="mob-fab-item" title="Músicas recentes">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </button>
+            <button id="mob-mic-btn" onclick="mobileToggleMic()" class="mob-fab-item" title="Falar por microfone">
+                <svg id="mob-mic-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </button>
+            <button id="mob-chat-btn" onclick="mobileChatToggle()" class="mob-fab-item" title="Abrir chat">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+        </div>
+        <!-- Botão principal -->
+        <button id="mob-fab-main" onclick="mobileFabToggle()" title="Funções">
+            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
-
-        <!-- BIG MIC BUTTON -->
-        <button id="mob-mic-btn" onclick="mobileToggleMic()"
-                class="w-16 h-16 rounded-full bg-yellow-400 hover:bg-yellow-300 active:scale-90 transition-all shadow-2xl flex items-center justify-center"
-                style="margin-top:-1.5rem;">
-            <svg id="mob-mic-icon" class="w-7 h-7 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="23"/>
-                <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-        </button>
-
-        <!-- Music toggle -->
-        <button onclick="toggleMusic()" class="flex flex-col items-center gap-1 text-white/50 active:scale-90 transition-all">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-            <span class="text-[9px] font-semibold tracking-wide uppercase">Música</span>
-        </button>
-
     </div>
 </div>
 
@@ -1292,35 +1329,44 @@ document.getElementById('btn-pip').addEventListener('click', async () => {
 
 // ── Mobile controls ───────────────────────────────────────────────────────
 let mobMicOn = false;
+function mobileFabToggle() {
+    document.getElementById('mob-fab-wrap').classList.toggle('open');
+}
 function mobileChatToggle() {
     const visible = !$chat.classList.contains('chat-hidden');
     $chat.classList.toggle('chat-hidden', visible);
+    showChat(!visible); // sincroniza opacity/transform/pointer-events com a nova visibilidade
     // fechar music widget se chat abriu (tela pequena)
     if (!visible) document.getElementById('music-widget').classList.add('off');
     const btn = document.getElementById('mob-chat-btn');
-    btn.style.color = visible ? '' : 'rgba(250,204,21,1)';
+    btn.classList.toggle('active', !visible);
+    document.getElementById('mob-fab-wrap').classList.remove('open');
 }
 function mobileToggleMic() {
     if (!rec) { speak({ emotion:'sad', text:'Microfone não disponível neste browser 😢' }); return; }
     const btn = document.getElementById('mob-mic-btn');
     if (mobMicOn) {
         rec.stop(); mobMicOn = false;
-        btn.classList.remove('mic-ring','bg-red-500');
-        btn.classList.add('bg-yellow-400');
+        btn.classList.remove('mic-ring','active');
     } else {
         initAudio(); mobMicOn = true;
-        btn.classList.add('mic-ring','bg-red-500');
-        btn.classList.remove('bg-yellow-400');
+        btn.classList.add('mic-ring','active');
         rec.start();
     }
+    document.getElementById('mob-fab-wrap').classList.remove('open');
 }
+// Fecha o menu do FAB ao tocar fora dele
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('mob-fab-wrap');
+    if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) wrap.classList.remove('open');
+});
 // Sync mobile mic state quando o rec termina
 if (typeof rec !== 'undefined' && rec) {
     const _origEnd = rec.onend;
     rec.onend = (e) => {
         mobMicOn = false;
         const btn = document.getElementById('mob-mic-btn');
-        if (btn) { btn.classList.remove('mic-ring','bg-red-500'); btn.classList.add('bg-yellow-400'); }
+        if (btn) { btn.classList.remove('mic-ring','active'); }
         if (_origEnd) _origEnd(e);
     };
 }
