@@ -43,6 +43,9 @@ input[type="file"] { display:none; }
 /* Music widget */
 #music-widget { transition:opacity .3s ease,transform .3s ease; }
 #music-widget.off { opacity:0; pointer-events:none; transform:translateY(8px); }
+/* Volume popup */
+.vol-popup { transition:opacity .2s ease,transform .2s ease; }
+.vol-popup.off { opacity:0; pointer-events:none; transform:translateY(8px); }
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
 .now-dot { animation:pulse-dot 1s ease infinite; }
 
@@ -352,6 +355,14 @@ input[type="file"] { display:none; }
             <button onclick="toggleMusic()" class="dock-btn" title="Músicas recentes (Last.fm)">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             </button>
+            <div class="relative">
+                <button onclick="toggleVolPopup('vol-popup')" class="dock-btn" title="Volume">
+                    <svg class="w-5 h-5 vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+                <div id="vol-popup" class="vol-popup off glass absolute bottom-full right-0 mb-2 rounded-xl px-3 py-3 flex items-center" style="width:140px;">
+                    <input type="range" min="0" max="100" class="vol-slider w-full accent-yellow-400" oninput="setVolume(this.value)">
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -403,6 +414,14 @@ input[type="file"] { display:none; }
             <button onclick="toggleMusic()" class="mob-fab-item" title="Músicas recentes">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             </button>
+            <div class="relative">
+                <button onclick="toggleVolPopup('mob-vol-popup')" class="mob-fab-item" title="Volume">
+                    <svg class="w-5 h-5 vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+                <div id="mob-vol-popup" class="vol-popup off glass absolute right-full top-0 mr-2 rounded-xl px-3 py-3 flex items-center" style="width:140px;" onclick="event.stopPropagation();">
+                    <input type="range" min="0" max="100" class="vol-slider w-full accent-yellow-400" oninput="setVolume(this.value)">
+                </div>
+            </div>
             <button id="mob-mic-btn" onclick="mobileToggleMic()" class="mob-fab-item" title="Falar por microfone">
                 <svg id="mob-mic-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -470,6 +489,19 @@ input[type="file"] { display:none; }
                             <button onclick="setBg('#3d2c5c')" class="w-6 h-6 rounded-full bg-[#3d2c5c] border-2 border-white/20 hover:scale-110 transition-transform"></button>
                             <button onclick="setBg('#111827')" class="w-6 h-6 rounded-full bg-[#111827] border-2 border-white/20 hover:scale-110 transition-transform"></button>
                         </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2 mt-4">
+                    <label class="block text-[10px] font-bold text-white/55 uppercase tracking-widest font-mono">Tipo de Som da Pipu</label>
+                    <div class="flex items-center gap-2">
+                        <select id="sound-sel" onchange="setSoundType(this.value)" class="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white outline-none">
+                            <option value="doce">Doce 🍬 (padrão)</option>
+                            <option value="agudo">Agudo 🐤</option>
+                            <option value="grave">Grave 🐻</option>
+                            <option value="robotico">Robótico 🤖</option>
+                        </select>
+                        <button onclick="chirp()" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold text-white/70 transition-colors">Ouvir</button>
                     </div>
                 </div>
             </div>
@@ -567,6 +599,8 @@ const LS_BG    = 'pipu_bg';
 const LS_ST    = 'pipu_state';
 const LS_BLK   = 'pipu_blocked';
 const LS_USERKEY = 'pipu_user_gemini_key';
+const LS_VOL   = 'pipu_volume';
+const LS_SOUND = 'pipu_sound_type';
 
 // ── Image assets ──────────────────────────────────────────────────────────
 const EX = 'DESIGN/express%C3%B5es/'; // DESIGN/expressões/
@@ -610,6 +644,16 @@ let pipActive  = false;
 let screenStream = null;
 let visionTimer  = null;
 let isVictor   = false;
+let volume     = parseInt(localStorage.getItem(LS_VOL) ?? '70', 10);
+let soundType  = localStorage.getItem(LS_SOUND) || 'doce';
+
+// ── Perfis de som da Pipu (forma de onda / notas / curva do bip) ──
+const SOUND_PROFILES = {
+    doce:     { type:'sine',     notes:[520,580,640,700,760,820,880],     rampMul:1.18 },
+    agudo:    { type:'triangle', notes:[900,960,1020,1080,1140,1200,1260], rampMul:1.22 },
+    grave:    { type:'sine',     notes:[180,210,240,270,300,330,360],     rampMul:1.12 },
+    robotico: { type:'square',   notes:[300,340,380,420,460,500,540],     rampMul:1.3  },
+};
 
 let persona = (() => {
     try { const s = localStorage.getItem(LS_ST); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DA)); }
@@ -665,21 +709,54 @@ function initAudio() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 function chirp() {
+    if (volume <= 0) return;
     try {
         initAudio();
         const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'sine';
+        const profile = SOUND_PROFILES[soundType] || SOUND_PROFILES.doce;
+        osc.type = profile.type;
         // Tom varia com a letra atual, subindo de leve -> bip fofo tipo Animal Crossing
-        const notes = [520, 580, 640, 700, 760, 820, 880];
-        const base = notes[Math.floor(Math.random() * notes.length)];
+        const base = profile.notes[Math.floor(Math.random() * profile.notes.length)];
         osc.frequency.setValueAtTime(base, now);
-        osc.frequency.exponentialRampToValueAtTime(base * 1.18, now + 0.045);
+        osc.frequency.exponentialRampToValueAtTime(base * profile.rampMul, now + 0.045);
+        const peak = 0.075 * (volume / 100);
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(0.075, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), now + 0.012);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(now); osc.stop(now + 0.085);
     } catch {}
+}
+
+// ── Volume master (música + bips da Pipu) ───────────────────────────────────
+function updateVolIcons() {
+    const svg = volume <= 0
+        ? '<path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'
+        : '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    document.querySelectorAll('.vol-icon').forEach(el => el.innerHTML = svg);
+}
+function setVolume(v) {
+    volume = Math.max(0, Math.min(100, +v));
+    localStorage.setItem(LS_VOL, volume);
+    const audio = $plAudio();
+    if (audio) audio.volume = volume / 100;
+    document.querySelectorAll('.vol-slider').forEach(s => s.value = volume);
+    updateVolIcons();
+}
+function toggleVolPopup(id) {
+    document.getElementById(id).classList.toggle('off');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.relative')) {
+        document.getElementById('vol-popup')?.classList.add('off');
+        document.getElementById('mob-vol-popup')?.classList.add('off');
+    }
+});
+
+// ── Tipo de som da Pipu ──────────────────────────────────────────────────────
+function setSoundType(t) {
+    soundType = t;
+    localStorage.setItem(LS_SOUND, t);
 }
 
 // ── Speak — "voz" em bips (estilo Animal Crossing/Celeste), boca aberta durante a fala ──
@@ -1036,6 +1113,7 @@ function renderLastFm(tracks) {
 }
 
 const $plAudio = () => document.getElementById('pl-audio');
+setVolume(volume); // aplica o volume guardado (e atualiza ícones) agora que o player existe
 
 async function playTrack(name, artist, art = '') {
     const q = encodeURIComponent(`${name} ${artist}`);
@@ -1174,6 +1252,7 @@ document.getElementById('pw-inp').addEventListener('keypress', e => { if (e.key=
 function openCfg() {
     initAudio();
     document.getElementById('inp-color').value = bgColor;
+    document.getElementById('sound-sel').value = soundType;
     refreshUploadUI();
     document.getElementById('cfg-modal').style.display = 'flex';
     switchTab('visual');
