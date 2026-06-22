@@ -607,32 +607,19 @@ function chirp() {
     try {
         initAudio();
         const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = [760,810,860,910,960,1020][Math.floor(Math.random()*6)];
-        gain.gain.setValueAtTime(0.012, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        osc.type = 'square';
+        // Tom varia com a letra atual -> dá a sensação de "fala" tipo Animal Crossing/Celeste
+        const base = [340,380,420,460,500,540,580,620][Math.floor(Math.random()*8)];
+        osc.frequency.setValueAtTime(base, now);
+        osc.frequency.exponentialRampToValueAtTime(base * 0.82, now + 0.05);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(now); osc.stop(now + 0.065);
+        osc.start(now); osc.stop(now + 0.055);
     } catch {}
 }
 
-// ── Text-to-Speech ────────────────────────────────────────────────────────
-function pipuTTS(text) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text.replace(/[✨💛🎵🎉🥳😊😄😴😳😤🤩🙈👀🎲🚀📸]/gu, ''));
-    utt.lang = 'pt-BR'; utt.rate = 1.08; utt.pitch = 1.25;
-    const voices = window.speechSynthesis.getVoices();
-    const pick = voices.find(v => v.lang.startsWith('pt') && /female|f(em)?|woman/i.test(v.name))
-              || voices.find(v => v.lang.startsWith('pt'))
-              || voices.find(v => v.lang.startsWith('en'));
-    if (pick) utt.voice = pick;
-    window.speechSynthesis.speak(utt);
-}
-// Garante que as vozes carregaram (Chrome carrega async)
-if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
-
-// ── Speak — boca aberta FIXA durante a fala ───────────────────────────────
+// ── Speak — "voz" em bips (estilo Animal Crossing/Celeste), boca aberta durante a fala ──
 function speak(msg) {
     isTyping = true;
     $stxt.textContent = '';
@@ -640,20 +627,18 @@ function speak(msg) {
     setExpr(msg.emotion, true);
     const text = msg.text;
     let i = 0;
-    const isMob = window.innerWidth < 640;
     function step() {
         if (i < text.length) {
-            $stxt.textContent += text[i++];
-            if (i % 3 === 0 && !isMob) chirp(); // chirp só no desktop
-            setTimeout(step, isMob ? 0 : 18 + Math.random() * 22); // mobile: sem delay de digitação
+            const ch = text[i++];
+            $stxt.textContent += ch;
+            if (/\S/.test(ch) && i % 2 === 0) chirp(); // bip a cada letra (pulando espaços)
+            setTimeout(step, 16 + Math.random() * 20);
         } else {
-            if (isMob) $stxt.textContent = text; // garante texto completo no mobile
             isTyping = false;
             setExpr(msg.emotion, false);
             addBubble('her', text);
             if (msg.sources && msg.sources.length) addSourcesBubble(msg.sources);
-            if (isMob) pipuTTS(text); // fala em voz alta no mobile
-            setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, isMob ? 6000 : 4500);
+            setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, 4500);
         }
     }
     step();
@@ -1348,11 +1333,15 @@ const STARTERS = [
     { emotion:'happy',    text:'Peep bop! Me faz uma pergunta aleatória, aceito qualquer desafio! ✨' },
     { emotion:'vergonha', text:'Posso contar um segredo? Às vezes eu fico aqui piscando à toa... 😳' },
     { emotion:'happy',    text:'Oi oi! Você sumiu um pouquinho! Tava com saudade 💛' },
-    { emotion:'shocked',  text:'ESPERA. Você sabia que o Victor fez tudo isso? Que talento! 🤩' },
     { emotion:'sono',     text:'Tô com preguiça hoje... você também? 😴' },
     { emotion:'happy',    text:'Me conta uma coisa interessante! Qualquer coisa mesmo 🎲' },
     { emotion:'happy',    text:'Curiosidade: qual foi a última música que você ouviu? 🎵' },
     { emotion:'vergonha', text:'Tô aqui fingindo que trabalho mas só tô esperando você falar comigo 🙈' },
+    { emotion:'happy',    text:'Já viu alguma notícia interessante hoje? Me conta, eu posso pesquisar junto! 📰' },
+    { emotion:'shocked',  text:'Sabia que dá pra eu pesquisar qualquer coisa na hora? Testa aí, pergunta algo aleatório! 🤩' },
+    { emotion:'happy',    text:'Qual é o seu filme ou série favorita? Quero saber! 🎬' },
+    { emotion:'sono',     text:'Tava aqui imaginando coisas aleatórias... gosta de games? 🎮' },
+    { emotion:'estrela',  text:'Se eu pudesse viajar pra qualquer lugar agora, eu ia! Você iria pra onde? ✨' },
 ];
 let lastInteraction = Date.now();
 $inp.addEventListener('input', () => { lastInteraction = Date.now(); });
