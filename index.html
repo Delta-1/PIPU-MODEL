@@ -68,12 +68,9 @@ input[type="file"] { display:none; }
     border: 1px solid rgba(255,255,255,.12); box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
 .vol-popup.off { opacity:0; pointer-events:none; transform:translateY(8px); }
-/* No mobile, sobe o botão acima do FAB para não se sobreporem */
+/* No mobile, o volume já mora dentro da barra inferior — o botão flutuante do desktop fica escondido */
 @media (max-width:1024px) {
-    #vol-fab-wrap { bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); }
-    body:has(#chat:not(.chat-hidden)) #vol-fab-wrap {
-        bottom: calc(70dvh + 5.2rem);
-    }
+    #vol-fab-wrap { display: none; }
 }
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
 .now-dot { animation:pulse-dot 1s ease infinite; }
@@ -136,47 +133,31 @@ input[type="file"] { display:none; }
         left: 50% !important; transform: translateX(-50%) !important;
     }
 
-    /* ── Botão flutuante (FAB) no canto inferior direito — fica sempre visível para navegar o layout ── */
+    /* ── Barra inferior fixa, sempre visível — substitui o antigo menu flutuante ── */
     #mobile-dock {
         display: block !important;
         position: fixed; bottom: 0; left: 0; right: 0; top: 0;
         background: transparent; border-top: none; padding: 0;
         pointer-events: none; z-index: 50;
     }
-    #mob-fab-wrap {
-        position: absolute;
-        right: 1.1rem;
-        bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px));
-        display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+    #mob-bar {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        display: flex; align-items: center; justify-content: space-around;
+        gap: .5rem;
+        padding: .6rem max(1rem, env(safe-area-inset-left,0px)) calc(.6rem + env(safe-area-inset-bottom,0px)) max(1rem, env(safe-area-inset-right,0px));
+        background: rgba(8,18,36,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255,255,255,.08);
         pointer-events: auto;
-        transition: bottom .25s ease;
     }
-    /* Quando o chat está aberto, sobe o FAB para não cobrir a barra de mensagem */
-    #chat:not(.chat-hidden) ~ #mobile-dock #mob-fab-wrap {
-        bottom: calc(70dvh + 0.9rem);
-    }
-    #mob-fab-menu {
-        display: flex; flex-direction: column; align-items: center; gap: 0.65rem;
-        opacity: 0; transform: translateY(12px) scale(.85);
-        pointer-events: none; transition: opacity .22s ease, transform .22s ease;
-    }
-    #mob-fab-wrap.open #mob-fab-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    #mob-fab-wrap.open #mob-fab-main { transform: rotate(45deg); }
-    .mob-fab-item {
-        width: 3.1rem; height: 3.1rem; border-radius: 999px;
+    .mob-bar-btn {
+        width: 2.9rem; height: 2.9rem; border-radius: 14px;
         display: flex; align-items: center; justify-content: center;
-        background: rgba(8,18,36,.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,.12); box-shadow: 0 6px 18px rgba(0,0,0,.35);
-        color: rgba(255,255,255,.75); touch-action: manipulation;
+        color: rgba(255,255,255,.65); transition: all .2s; touch-action: manipulation;
     }
-    .mob-fab-item.active { background: #ef4444; color: #fff; }
-    #mob-fab-main {
-        width: 3.7rem; height: 3.7rem; border-radius: 999px;
-        background: #fcd34d; color: #1a1a2e;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 8px 24px rgba(0,0,0,.4);
-        transition: transform .22s ease; touch-action: manipulation;
-    }
+    .mob-bar-btn:active { transform: scale(.9); background: rgba(255,255,255,.08); }
+    .mob-bar-btn.active { background: #ef4444; color: #fff; }
+    /* Esconde a barra quando o chat mobile está aberto (senão ela fica por cima, já que #mobile-dock é z-50 e #chat é z-20) */
+    #chat:not(.chat-hidden) ~ #mobile-dock #mob-bar { display: none; }
 
     /* Alvos de toque maiores e mais "respiráveis" em telas pequenas */
     .dock-btn { padding: 12px; min-width: 44px; min-height: 44px; }
@@ -186,7 +167,7 @@ input[type="file"] { display:none; }
 @media (max-width:1024px) and (orientation:landscape) and (max-height:480px) {
     #char { height: calc(100dvh - 5rem - env(safe-area-inset-bottom,0px)) !important; margin-top: 4.2rem !important; }
     #mob-music-bar { display:none !important; }
-    #mob-fab-main, .mob-fab-item { width: 2.9rem !important; height: 2.9rem !important; }
+    .mob-bar-btn { width: 2.4rem !important; height: 2.4rem !important; }
 }
 
 @keyframes micRing { 0%{box-shadow:0 0 0 0 rgba(250,204,21,.5)} 70%{box-shadow:0 0 0 18px rgba(250,204,21,0)} 100%{box-shadow:0 0 0 0 rgba(250,204,21,0)} }
@@ -194,6 +175,29 @@ input[type="file"] { display:none; }
 
 /* PiP caption hint (mostrado no app principal quando o PiP está ativo) */
 #pip-hint { transition:opacity .25s ease; }
+
+/* PiP simulado: bolha flutuante arrastável (fallback para celulares sem PiP nativo de canvas) */
+#pip-sim {
+    position: fixed; top: 5rem; right: 1rem; z-index: 70;
+    width: 132px; padding: 6px;
+    background: rgba(8,18,36,.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(252,211,77,.25); border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    touch-action: none; user-select: none; cursor: grab;
+}
+#pip-sim.hidden { display: none; }
+#pip-sim:active { cursor: grabbing; }
+#pip-sim canvas { width: 120px; height: 120px; border-radius: 10px; display: block; }
+#pip-sim-close {
+    position: absolute; top: -8px; right: -8px; width: 22px; height: 22px;
+    border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,.4);
+}
+#pip-sim-caption {
+    font-size: 10.5px; line-height: 1.25; color: #fff; margin-top: 5px;
+    max-height: 3.5em; overflow: hidden;
+}
 </style>
 </head>
 <body id="body" style="background:#176580;color:white;">
@@ -218,6 +222,13 @@ input[type="file"] { display:none; }
         <span class="w-1.5 h-1.5 rounded-full bg-red-400 now-dot inline-block"></span>
         PiP: vendo a tela + ouvindo
     </div>
+</div>
+
+<!-- PiP simulado: painel flutuante arrastável, usado no celular onde o PiP nativo não funciona com canvas -->
+<div id="pip-sim" class="hidden">
+    <button id="pip-sim-close" title="Fechar PiP">✕</button>
+    <canvas id="pip-sim-c" width="120" height="120"></canvas>
+    <div id="pip-sim-caption"></div>
 </div>
 
 <!-- Screen capture (hidden) -->
@@ -427,34 +438,35 @@ input[type="file"] { display:none; }
     </div>
 </div>
 
-<!-- ── MOBILE FAB (substitui a barra de dock) ── -->
+<!-- ── MOBILE: barra inferior fixa, sempre visível (substitui o antigo menu flutuante) ── -->
 <div id="mobile-dock" class="hidden">
-    <div id="mob-fab-wrap" onclick="event.stopPropagation();">
-        <!-- Menu expandido: Música / Mic / Chat -->
-        <div id="mob-fab-menu">
-            <button onclick="toggleMusic()" class="mob-fab-item" title="Músicas recentes">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-            </button>
-            <button id="mob-mic-btn" onclick="mobileToggleMic()" class="mob-fab-item" title="Falar por microfone">
-                <svg id="mob-mic-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                    <line x1="12" y1="19" x2="12" y2="23"/>
-                    <line x1="8" y1="23" x2="16" y2="23"/>
-                </svg>
-            </button>
-            <button id="mob-chat-btn" onclick="mobileChatToggle()" class="mob-fab-item" title="Abrir chat">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </button>
-        </div>
-        <!-- Botão principal -->
-        <button id="mob-fab-main" onclick="mobileFabToggle()" title="Funções">
-            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div id="mob-bar">
+        <button onclick="toggleMusic()" class="mob-bar-btn" title="Músicas recentes">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         </button>
+        <button id="mob-mic-btn" onclick="mobileToggleMic()" class="mob-bar-btn" title="Falar por microfone">
+            <svg id="mob-mic-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+        </button>
+        <button id="mob-chat-btn" onclick="mobileChatToggle()" class="mob-bar-btn" title="Abrir chat">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <div class="relative">
+            <button onclick="event.stopPropagation();toggleVolPopup('mob-vol-popup')" id="mob-vol-btn" class="mob-bar-btn" title="Volume">
+                <svg class="w-5 h-5 vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+            <div id="mob-vol-popup" class="vol-popup off glass rounded-xl px-3 py-3 flex items-center" onclick="event.stopPropagation();">
+                <input type="range" min="0" max="100" class="vol-slider w-full accent-yellow-400" oninput="setVolume(this.value)">
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- ── VOLUME — botão fixo no canto inferior direito, sempre visível ── -->
+<!-- ── VOLUME (desktop) — botão fixo no canto inferior direito, sempre visível ── -->
 <div id="vol-fab-wrap" class="pointer-events-auto">
     <button onclick="event.stopPropagation();toggleVolPopup('vol-popup')" id="vol-fab-btn" title="Volume">
         <svg class="w-5 h-5 vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -670,6 +682,17 @@ let isVictor   = false;
 let volume     = parseInt(localStorage.getItem(LS_VOL) ?? '70', 10);
 let soundType  = localStorage.getItem(LS_SOUND) || 'doce';
 
+// ── Economia de API: só chama o Gemini enquanto alguém estiver de fato interagindo ──
+const IDLE_API_MS = 25000; // 25s sem interação = para de gastar chamadas à API
+let lastInteraction = Date.now();
+function markInteraction() { lastInteraction = Date.now(); }
+function isIdleForApi() { return Date.now() - lastInteraction > IDLE_API_MS; }
+const IDLE_FILLERS = [
+    { emotion:'sono',  text:'Continuo aqui de olho, só economizando energia enquanto ninguém fala comigo 😴' },
+    { emotion:'happy', text:'Tudo tranquilo por aqui! Me chama quando quiser que eu volto a prestar atenção na tela 💛' },
+    { emotion:'sono',  text:'Modo economia ativado... fala comigo que eu acordo na hora! 🌙' },
+];
+
 // ── Perfis de som da Pipu (forma de onda / notas / curva do bip) ──
 const SOUND_PROFILES = {
     doce:     { type:'sine',     notes:[520,580,640,700,760,820,880],     rampMul:1.18 },
@@ -772,7 +795,7 @@ function toggleVolPopup(id) {
 // Cliques dentro do botão/popup de volume já chamam stopPropagation, então
 // qualquer clique que chegue até aqui é "fora" — fecha o popup.
 document.addEventListener('click', () => {
-    document.getElementById('vol-popup')?.classList.add('off');
+    document.querySelectorAll('.vol-popup').forEach(el => el.classList.add('off'));
 });
 
 // ── Tipo de som da Pipu ──────────────────────────────────────────────────────
@@ -917,6 +940,7 @@ async function callGemini(query, imageBase64 = null, opts = {}) {
 async function submit() {
     const text = $inp.value.trim();
     if (!text || isTyping) return;
+    markInteraction();
     $inp.value = ''; initAudio();
     addBubble('user', text);
     isTyping = true;
@@ -930,6 +954,7 @@ const $mobInp = document.getElementById('mob-inp');
 function submitMobile() {
     const text = $mobInp.value.trim();
     if (!text || isTyping) return;
+    markInteraction();
     $mobInp.value = ''; initAudio();
     addBubble('user', text);
     isTyping = true;
@@ -1032,6 +1057,10 @@ $btnVision.addEventListener('click', async () => {
 
 async function analyzeScreen() {
     if (!screenStream || isTyping) return;
+    if (isIdleForApi()) {
+        speak(IDLE_FILLERS[Math.floor(Math.random() * IDLE_FILLERS.length)]);
+        return;
+    }
     screenCtx.drawImage($screenV, 0, 0, 640, 360);
     const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
     try {
@@ -1451,6 +1480,7 @@ function stopPipMic() {
 
 async function handlePipVoiceQuery(text) {
     if (!screenStream || !text.trim()) return;
+    markInteraction();
     screenCtx.drawImage($screenV, 0, 0, 640, 360);
     const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
     addBubble('user', text);
@@ -1472,31 +1502,82 @@ function stopPipMode() {
     pipOwnsScreen = false;
     clearInterval(visionTimer); visionTimer = null;
     $pipHint.classList.add('hidden');
+    hidePipSim();
 }
 pipV.addEventListener('leavepictureinpicture', stopPipMode);
+
+// ── PiP simulado: painel flutuante arrastável (celular não tem PiP nativo confiável para canvas) ──
+const $pipSim = document.getElementById('pip-sim');
+const pipSimCtx = document.getElementById('pip-sim-c').getContext('2d');
+const $pipSimCaption = document.getElementById('pip-sim-caption');
+const usesNativePip = document.pictureInPictureEnabled && !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let pipSimTimer = null;
+
+function drawPipSimFrame() {
+    pipSimCtx.clearRect(0, 0, 120, 120);
+    pipSimCtx.drawImage(pipC, 0, 0, 120, 120);
+}
+function showPipSim() {
+    $pipSim.classList.remove('hidden');
+    $pipSimCaption.textContent = pipCaption;
+    pipSimTimer = setInterval(() => { drawPipSimFrame(); $pipSimCaption.textContent = pipCaption; }, 200);
+}
+function hidePipSim() {
+    $pipSim.classList.add('hidden');
+    clearInterval(pipSimTimer); pipSimTimer = null;
+}
+document.getElementById('pip-sim-close').addEventListener('click', (e) => { e.stopPropagation(); stopPipMode(); });
+
+// Arrastar o painel (mouse + touch)
+(() => {
+    let dragging = false, offX = 0, offY = 0;
+    function start(x, y) {
+        dragging = true;
+        const r = $pipSim.getBoundingClientRect();
+        offX = x - r.left; offY = y - r.top;
+        $pipSim.style.right = 'auto';
+    }
+    function move(x, y) {
+        if (!dragging) return;
+        const w = $pipSim.offsetWidth, h = $pipSim.offsetHeight;
+        let left = x - offX, top = y - offY;
+        left = Math.max(4, Math.min(window.innerWidth - w - 4, left));
+        top  = Math.max(4, Math.min(window.innerHeight - h - 4, top));
+        $pipSim.style.left = left + 'px';
+        $pipSim.style.top  = top + 'px';
+    }
+    $pipSim.addEventListener('mousedown', e => { if (e.target.id === 'pip-sim-close') return; start(e.clientX, e.clientY); });
+    document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    document.addEventListener('mouseup', () => dragging = false);
+    $pipSim.addEventListener('touchstart', e => { if (e.target.id === 'pip-sim-close') return; const t = e.touches[0]; start(t.clientX, t.clientY); }, { passive: true });
+    $pipSim.addEventListener('touchmove', e => { const t = e.touches[0]; move(t.clientX, t.clientY); }, { passive: true });
+    document.addEventListener('touchend', () => dragging = false);
+})();
 
 document.getElementById('btn-pip').addEventListener('click', async () => {
     initAudio();
     try {
-        if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture();
+        if (pipActive) {
+            if (document.pictureInPictureElement) await document.exitPictureInPicture();
+            else stopPipMode();
         } else {
             pipActive = true;
             await startPipScreenShare();
             startPipMic();
             drawPip();
-            $pipHint.classList.remove('hidden');
             speak({ emotion:'happy', text:'Modo PiP ativo! Tô vendo a tua tela e ouvindo o microfone — me chama que eu te ajudo a achar o caminho! 👀🎤' });
-            await pipV.requestPictureInPicture();
+            if (usesNativePip) {
+                $pipHint.classList.remove('hidden');
+                await pipV.requestPictureInPicture();
+            } else {
+                showPipSim();
+            }
         }
     } catch (e) { stopPipMode(); speak({ emotion:'sad', text:'Não consegui ativar o modo PiP completo... 😢' }); }
 });
 
 // ── Mobile controls ───────────────────────────────────────────────────────
 let mobMicOn = false;
-function mobileFabToggle() {
-    document.getElementById('mob-fab-wrap').classList.toggle('open');
-}
 function mobileChatToggle() {
     const visible = !$chat.classList.contains('chat-hidden');
     $chat.classList.toggle('chat-hidden', visible);
@@ -1505,7 +1586,6 @@ function mobileChatToggle() {
     if (!visible) document.getElementById('music-widget').classList.add('off');
     const btn = document.getElementById('mob-chat-btn');
     btn.classList.toggle('active', !visible);
-    document.getElementById('mob-fab-wrap').classList.remove('open');
 }
 function mobileToggleMic() {
     if (!rec) { speak({ emotion:'sad', text:'Microfone não disponível neste browser 😢' }); return; }
@@ -1518,13 +1598,7 @@ function mobileToggleMic() {
         btn.classList.add('mic-ring','active');
         rec.start();
     }
-    document.getElementById('mob-fab-wrap').classList.remove('open');
 }
-// Fecha o menu do FAB ao tocar fora dele
-document.addEventListener('click', (e) => {
-    const wrap = document.getElementById('mob-fab-wrap');
-    if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) wrap.classList.remove('open');
-});
 // Sync mobile mic state quando o rec termina
 if (typeof rec !== 'undefined' && rec) {
     const _origEnd = rec.onend;
@@ -1553,8 +1627,7 @@ const STARTERS = [
     { emotion:'sono',     text:'Tava aqui imaginando coisas aleatórias... gosta de games? 🎮' },
     { emotion:'estrela',  text:'Se eu pudesse viajar pra qualquer lugar agora, eu ia! Você iria pra onde? ✨' },
 ];
-let lastInteraction = Date.now();
-$inp.addEventListener('input', () => { lastInteraction = Date.now(); });
+$inp.addEventListener('input', markInteraction);
 function scheduleStarter() {
     const delay = (100 + Math.random() * 100) * 1000; // 100–200s
     setTimeout(() => {
