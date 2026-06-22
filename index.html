@@ -309,9 +309,9 @@ input[type="file"] { display:none; }
 <div id="desktop-dock" class="absolute bottom-5 left-0 right-0 flex justify-center px-4 z-30 pointer-events-none">
     <div id="dock-inner" class="glass pointer-events-auto rounded-2xl px-3 py-2.5 flex items-center gap-2 w-full max-w-2xl border border-white/10 shadow-2xl">
 
-        <div class="flex-1 flex items-center gap-1 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
+        <div class="flex-1 min-w-0 flex items-center gap-1 bg-black/25 rounded-xl px-3 py-2 border border-white/5">
             <input id="inp" type="text" autocomplete="off"
-                   class="flex-1 bg-transparent outline-none text-white placeholder-white/30 text-sm"
+                   class="flex-1 min-w-0 bg-transparent outline-none text-white placeholder-white/30 text-sm"
                    placeholder="Fala com a Pipu...">
 
             <!-- Mic -->
@@ -1472,8 +1472,16 @@ document.getElementById('btn-pip').addEventListener('click', async () => {
 
 // ── Mobile controls ───────────────────────────────────────────────────────
 let mobMicOn = false;
+// O popup de volume mobile fica dentro do menu do FAB — se ficar aberto quando o
+// menu recolhe, na próxima vez que abrir o FAB o slider já aparece expandido
+// (e a animação de "descer" do FAB parece travada). Sempre fecha junto.
+function closeMobVolPopup() {
+    document.getElementById('mob-vol-popup')?.classList.add('off');
+}
 function mobileFabToggle() {
-    document.getElementById('mob-fab-wrap').classList.toggle('open');
+    const wrap = document.getElementById('mob-fab-wrap');
+    wrap.classList.toggle('open');
+    if (!wrap.classList.contains('open')) closeMobVolPopup();
 }
 function mobileChatToggle() {
     const visible = !$chat.classList.contains('chat-hidden');
@@ -1484,6 +1492,7 @@ function mobileChatToggle() {
     const btn = document.getElementById('mob-chat-btn');
     btn.classList.toggle('active', !visible);
     document.getElementById('mob-fab-wrap').classList.remove('open');
+    closeMobVolPopup();
 }
 function mobileToggleMic() {
     if (!rec) { speak({ emotion:'sad', text:'Microfone não disponível neste browser 😢' }); return; }
@@ -1497,11 +1506,15 @@ function mobileToggleMic() {
         rec.start();
     }
     document.getElementById('mob-fab-wrap').classList.remove('open');
+    closeMobVolPopup();
 }
 // Fecha o menu do FAB ao tocar fora dele
 document.addEventListener('click', (e) => {
     const wrap = document.getElementById('mob-fab-wrap');
-    if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) wrap.classList.remove('open');
+    if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) {
+        wrap.classList.remove('open');
+        closeMobVolPopup();
+    }
 });
 // Sync mobile mic state quando o rec termina
 if (typeof rec !== 'undefined' && rec) {
