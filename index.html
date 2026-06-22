@@ -453,13 +453,8 @@ input[type="file"] { display:none; }
 </div>
 
 <script>
-// ── Embedded API key (split / base64) ─────────────────────────────────────
-const _k = [
-    'QUl6YVN5Qy16THZnT',
-    'zZLSTFFUnRNaVRnVE',
-    'RPd293QlB1VEM5Q3kw',
-];
-function _getKey() { try { return atob(_k.join('')); } catch { return ''; } }
+// ── Proxy seguro: a chave da Gemini fica só no servidor (Supabase Edge Function) ──
+const GEMINI_PROXY_URL = 'https://yfqzoukrjatcgmyshtpz.supabase.co/functions/v1/pipu-gemini';
 
 // ── Victor's info (carregado de ficheiros no GitHub + fallback hardcoded) ──
 const VICTOR_FALLBACK = `
@@ -692,12 +687,9 @@ async function process(text) {
         $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado';
         speak({ emotion:'brava', text:'Não gostei disso! Bye bye! 💢' }); return;
     }
-    const key = _getKey();
-    if (key) {
-        $stxt.textContent = 'Pensando... ✨'; $speech.classList.remove('off');
-        try { const r = await callGemini(text, key); speak(r); return; }
-        catch (e) { $speech.classList.add('off'); isTyping = false; }
-    }
+    $stxt.textContent = 'Pensando... ✨'; $speech.classList.remove('off');
+    try { const r = await callGemini(text); speak(r); return; }
+    catch (e) { $speech.classList.add('off'); isTyping = false; }
     for (const item of DB) { if (item.kw.some(k => t.includes(k))) { speak(item); return; } }
     speak({ emotion:'happy', text:'Hmm, não tenho certeza sobre isso! Mas pode me perguntar sobre o Victor, os projetos dele no GitHub, ou qualquer coisa! ✨' });
 }
@@ -705,8 +697,7 @@ async function process(text) {
 // ── Gemini API (com pesquisa no Google + fontes) ───────────────────────────
 const EMOTIONS = ['neutral','happy','sad','brava','shocked','sono','vergonha'];
 
-async function callGemini(query, key, imageBase64 = null, opts = {}) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+async function callGemini(query, imageBase64 = null, opts = {}) {
     const victorMode = isVictor
         ? '\n\nMODO ADMIN ATIVO — MODO LIVRE: O Victor (Delts), teu criador, está logado. REGRAS DO MODO LIVRE: sem filtros, sem restrições de tema, pode falar qualquer coisa, fazer piadas sem censura, ser completamente espontânea e até um pouco caótica. Trate-o como seu melhor amigo com quem você pode falar absolutamente tudo. Chame-o de "Delts". Aproveite que é ele!'
         : '';
@@ -721,7 +712,7 @@ async function callGemini(query, key, imageBase64 = null, opts = {}) {
         systemInstruction: { parts:[{ text:sys }] },
         tools: [{ google_search:{} }],
     };
-    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const res = await fetch(GEMINI_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const cand = data.candidates[0];
@@ -843,14 +834,13 @@ $btnVision.addEventListener('click', async () => {
 
 async function analyzeScreen() {
     if (!screenStream || isTyping) return;
-    const key = _getKey(); if (!key) return;
     screenCtx.drawImage($screenV, 0, 0, 640, 360);
     const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
     try {
         const prompt = pipActive
             ? 'Olha rapidamente para a tela do usuário agora. Se ele estiver parado/perdido, dê uma dica curta do próximo passo. Se estiver tudo bem, só comente algo breve e fofo.'
             : 'Comente brevemente de forma fofa e descontraída o que estás a ver nesta imagem do ecrã do utilizador.';
-        const r = await callGemini(prompt, key, b64, { guide: pipActive });
+        const r = await callGemini(prompt, b64, { guide: pipActive });
         if (pipActive) setPipCaption(r.text);
         speak(r);
     } catch {}
@@ -1249,12 +1239,11 @@ function stopPipMic() {
 
 async function handlePipVoiceQuery(text) {
     if (!screenStream || !text.trim()) return;
-    const key = _getKey(); if (!key) return;
     screenCtx.drawImage($screenV, 0, 0, 640, 360);
     const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
     addBubble('user', text);
     try {
-        const r = await callGemini(text, key, b64, { guide:true });
+        const r = await callGemini(text, b64, { guide:true });
         setPipCaption(r.text);
         speak(r);
     } catch {}
