@@ -1046,7 +1046,8 @@ async function playTrack(name, artist, art = '') {
     audio.pause(); audio.src = '';
 
     try {
-        const res = await fetch(`https://api.deezer.com/search?q=${q}&limit=1`);
+        // Deezer bloqueia CORS para fetch direto do navegador — usa o proxy do Supabase.
+        const res = await fetch(`https://yfqzoukrjatcgmyshtpz.supabase.co/functions/v1/pipu-deezer?q=${q}&limit=1`);
         const d   = await res.json();
         const preview = d.data?.[0]?.preview;
         if (preview) {
