@@ -2,13 +2,18 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pipu — Portfólio do Victor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#176580">
+<title>Pipu — Sua assistente</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width:100vw; height:100vh; overflow:hidden; font-family:'Outfit',sans-serif; user-select:none; transition:background-color .5s ease; }
+html, body { width:100vw; height:100vh; height:100dvh; overflow:hidden; font-family:'Outfit',sans-serif; user-select:none; transition:background-color .5s ease; }
+input, textarea { font-size:16px; } /* evita zoom automático no iOS ao focar inputs */
 .glass       { background:rgba(8,18,36,.5); backdrop-filter:blur(22px) saturate(1.4); -webkit-backdrop-filter:blur(22px) saturate(1.4); border:1px solid rgba(255,255,255,.1); }
 .glass-light { background:rgba(255,255,255,.07); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.12); }
 .bubble-her  { background:#f1f0f0; color:#1a1a2e; border-radius:18px 18px 18px 4px; }
@@ -41,8 +46,8 @@ input[type="file"] { display:none; }
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
 .now-dot { animation:pulse-dot 1s ease infinite; }
 
-/* ── Mobile ── */
-@media (max-width:640px) {
+/* ── Mobile / Tablet (Android & iOS) ── */
+@media (max-width:1024px) {
     #desktop-dock  { display: none !important; }
     #mobile-dock   { display: flex !important; }
     #mobile-topbar { display: block !important; }
@@ -50,31 +55,50 @@ input[type="file"] { display:none; }
     /* Widget de música completo → escondido no mobile (vira barra no topbar) */
     #music-widget  { display: none !important; }
 
+    /* Respeita notch / status bar / home indicator (iOS & Android) */
+    #mobile-topbar { padding-top: env(safe-area-inset-top, 0px); }
+    #mobile-dock   { padding-bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px)) !important; }
+
     /* Personagem: entre topbar (~6.5rem) e dock (~5.5rem) */
     #char {
-        height: calc(100vh - 12rem) !important;
-        margin-top: 6.5rem !important;
+        height: calc(100dvh - 12rem - env(safe-area-inset-bottom,0px)) !important;
+        margin-top: calc(6.5rem + env(safe-area-inset-top,0px)) !important;
     }
 
-    /* Chat: canto inferior direito acima do dock */
+    /* Chat: canto inferior esquerdo acima do dock */
     #chat {
-        top: auto !important; bottom: 5.5rem !important;
-        left: auto !important; right: 0.75rem !important;
+        top: auto !important; bottom: calc(5.5rem + env(safe-area-inset-bottom,0px)) !important;
+        left: 0.75rem !important; right: auto !important;
         width: calc(100vw - 1.5rem) !important;
         max-width: 330px !important;
-        height: 40vh !important;
+        height: 42dvh !important;
         min-height: 180px !important; resize: none !important;
     }
     #chat.chat-hidden { display: none !important; }
 
     /* Bolha de fala */
     #speech {
-        bottom: 44vh !important; max-width: 86vw !important;
+        bottom: 44dvh !important; max-width: 86vw !important;
         left: 50% !important; transform: translateX(-50%) !important;
     }
+
+    /* Alvos de toque maiores e mais "respiráveis" em telas pequenas */
+    .dock-btn { padding: 12px; min-width: 44px; min-height: 44px; }
+    #mob-chat-btn, #mob-mic-btn { touch-action: manipulation; }
 }
+
+/* Telemóvel pequeno em modo paisagem: dock/topbar mais finos para sobrar espaço */
+@media (max-width:1024px) and (orientation:landscape) and (max-height:480px) {
+    #char { height: calc(100dvh - 8rem - env(safe-area-inset-bottom,0px)) !important; margin-top: 4.5rem !important; }
+    #mob-music-bar { display:none !important; }
+    #mob-mic-btn { width:3.2rem !important; height:3.2rem !important; }
+}
+
 @keyframes micRing { 0%{box-shadow:0 0 0 0 rgba(250,204,21,.5)} 70%{box-shadow:0 0 0 18px rgba(250,204,21,0)} 100%{box-shadow:0 0 0 0 rgba(250,204,21,0)} }
 .mic-ring { animation: micRing 1s ease infinite; }
+
+/* PiP caption hint (mostrado no app principal quando o PiP está ativo) */
+#pip-hint { transition:opacity .25s ease; }
 </style>
 </head>
 <body id="body" style="background:#176580;color:white;">
@@ -91,6 +115,15 @@ input[type="file"] { display:none; }
 <!-- PiP plumbing -->
 <canvas id="pip-c" width="400" height="400" class="hidden" style="position:absolute"></canvas>
 <video  id="pip-v" autoplay muted playsinline class="hidden" style="position:absolute"></video>
+
+<!-- PiP status hint -->
+<div id="pip-hint" class="hidden fixed top-4 right-4 z-50 pointer-events-none select-none">
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold tracking-widest"
+         style="color:#fcd34d;background:rgba(8,18,36,.7);border-color:rgba(252,211,77,.25);backdrop-filter:blur(10px);">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400 now-dot inline-block"></span>
+        PiP: vendo a tela + ouvindo
+    </div>
+</div>
 
 <!-- Screen capture (hidden) -->
 <video id="screen-v" autoplay muted playsinline style="display:none;position:absolute"></video>
@@ -121,7 +154,7 @@ input[type="file"] { display:none; }
 
 <!-- ── CHAT WINDOW ── -->
 <div id="chat"
-     class="absolute top-5 right-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10"
+     class="absolute top-5 left-5 glass rounded-2xl shadow-2xl z-20 pointer-events-auto flex flex-col border border-white/10"
      style="width:330px;height:44vh;min-width:260px;min-height:250px;resize:both;overflow:hidden;transition:opacity .25s ease,transform .25s ease;">
     <div id="chat-hdr" class="flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move shrink-0 select-none" style="background:rgba(0,0,0,.18);">
         <div class="flex gap-1.5">
@@ -134,7 +167,7 @@ input[type="file"] { display:none; }
     </div>
     <div id="msgs" class="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5 scroll" style="background:rgba(0,0,0,.08);">
         <div class="bubble-her self-start px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm">
-            Olá! Sou a <strong>Pipu</strong>, assistente do Victor! 😊
+            Olá! Sou a <strong>Pipu</strong>, sua assistente! Pode me perguntar qualquer coisa 😊
         </div>
     </div>
 </div>
@@ -420,13 +453,8 @@ input[type="file"] { display:none; }
 </div>
 
 <script>
-// ── Embedded API key (split / base64) ─────────────────────────────────────
-const _k = [
-    'QUl6YVN5Qy16THZnT',
-    'zZLSTFFUnRNaVRnVE',
-    'RPd293QlB1VEM5Q3kw',
-];
-function _getKey() { try { return atob(_k.join('')); } catch { return ''; } }
+// ── Proxy seguro: a chave da Gemini fica só no servidor (Supabase Edge Function) ──
+const GEMINI_PROXY_URL = 'https://yfqzoukrjatcgmyshtpz.supabase.co/functions/v1/pipu-gemini';
 
 // ── Victor's info (carregado de ficheiros no GitHub + fallback hardcoded) ──
 const VICTOR_FALLBACK = `
@@ -434,7 +462,7 @@ Sobre Victor (teu criador):
 - Nome: Victor, também conhecido como Delts ou Delta
 - GitHub: https://github.com/Delta-1
 - Instagram: @V_ctorsz (https://instagram.com/V_ctorsz)
-- Criou a Pipu como portfólio interativo e assistente virtual
+- Criou a Pipu, mas a Pipu não é só um portfólio — ela é uma assistente de verdade, livre para falar de qualquer assunto com qualquer pessoa
 - É desenvolvedor focado em programação de alta performance, pixel art, animações e interfaces de IA
 - Adora criar experiências únicas e projetos criativos com tecnologia
 `;
@@ -447,7 +475,9 @@ Personalidade da Pipu:
 - Quando elogiada: sorri muito e fica feliz (usa emoção happy)
 - Quando insultada: fica brava
 - Quando falam do Victor: fica animadíssima e fala com entusiasmo
-- Missão: apresentar o Victor ao mundo como portfólio vivo
+- É uma assistente de uso geral: pesquisa, explica, ensina e ajuda qualquer pessoa com qualquer assunto, sem ficar travada só no tema do Victor
+- Age como uma "super amiga": ensina passo a passo, comemora quando a pessoa entende, e cobra com bom humor (sem ser chata) quando a pessoa trava ou não sabe o que fazer
+- Quando está acompanhando a tela do usuário (modo PiP/visão), guia a pessoa de forma prática: diz exatamente onde clicar, o que digitar e qual o próximo passo
 `;
 
 let victorInfo = VICTOR_FALLBACK;
@@ -572,32 +602,19 @@ function chirp() {
     try {
         initAudio();
         const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = [760,810,860,910,960,1020][Math.floor(Math.random()*6)];
-        gain.gain.setValueAtTime(0.012, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        osc.type = 'square';
+        // Tom varia com a letra atual -> dá a sensação de "fala" tipo Animal Crossing/Celeste
+        const base = [340,380,420,460,500,540,580,620][Math.floor(Math.random()*8)];
+        osc.frequency.setValueAtTime(base, now);
+        osc.frequency.exponentialRampToValueAtTime(base * 0.82, now + 0.05);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(now); osc.stop(now + 0.065);
+        osc.start(now); osc.stop(now + 0.055);
     } catch {}
 }
 
-// ── Text-to-Speech ────────────────────────────────────────────────────────
-function pipuTTS(text) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text.replace(/[✨💛🎵🎉🥳😊😄😴😳😤🤩🙈👀🎲🚀📸]/gu, ''));
-    utt.lang = 'pt-BR'; utt.rate = 1.08; utt.pitch = 1.25;
-    const voices = window.speechSynthesis.getVoices();
-    const pick = voices.find(v => v.lang.startsWith('pt') && /female|f(em)?|woman/i.test(v.name))
-              || voices.find(v => v.lang.startsWith('pt'))
-              || voices.find(v => v.lang.startsWith('en'));
-    if (pick) utt.voice = pick;
-    window.speechSynthesis.speak(utt);
-}
-// Garante que as vozes carregaram (Chrome carrega async)
-if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
-
-// ── Speak — boca aberta FIXA durante a fala ───────────────────────────────
+// ── Speak — "voz" em bips (estilo Animal Crossing/Celeste), boca aberta durante a fala ──
 function speak(msg) {
     isTyping = true;
     $stxt.textContent = '';
@@ -605,19 +622,18 @@ function speak(msg) {
     setExpr(msg.emotion, true);
     const text = msg.text;
     let i = 0;
-    const isMob = window.innerWidth < 640;
     function step() {
         if (i < text.length) {
-            $stxt.textContent += text[i++];
-            if (i % 3 === 0 && !isMob) chirp(); // chirp só no desktop
-            setTimeout(step, isMob ? 0 : 18 + Math.random() * 22); // mobile: sem delay de digitação
+            const ch = text[i++];
+            $stxt.textContent += ch;
+            if (/\S/.test(ch) && i % 2 === 0) chirp(); // bip a cada letra (pulando espaços)
+            setTimeout(step, 16 + Math.random() * 20);
         } else {
-            if (isMob) $stxt.textContent = text; // garante texto completo no mobile
             isTyping = false;
             setExpr(msg.emotion, false);
             addBubble('her', text);
-            if (isMob) pipuTTS(text); // fala em voz alta no mobile
-            setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, isMob ? 6000 : 4500);
+            if (msg.sources && msg.sources.length) addSourcesBubble(msg.sources);
+            setTimeout(() => { if (!isTyping) $speech.classList.add('off'); }, 4500);
         }
     }
     step();
@@ -629,6 +645,21 @@ function addBubble(who, text) {
     d.className = (who === 'her' ? 'bubble-her self-start' : 'bubble-user self-end')
         + ' px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm fade-up';
     d.textContent = text;
+    $msgs.appendChild(d);
+    $msgs.scrollTop = $msgs.scrollHeight;
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function addSourcesBubble(sources) {
+    const d = document.createElement('div');
+    d.className = 'bubble-her self-start px-3.5 py-2 text-xs max-w-[82%] leading-relaxed shadow-sm fade-up';
+    const links = sources.slice(0, 4).map(s =>
+        `<a href="${escapeHtml(s.uri)}" target="_blank" rel="noopener noreferrer" class="block text-blue-700 underline truncate hover:text-blue-900">${escapeHtml(s.title)}</a>`
+    ).join('');
+    d.innerHTML = `<p class="font-bold mb-1">📚 Fontes:</p>${links}`;
     $msgs.appendChild(d);
     $msgs.scrollTop = $msgs.scrollHeight;
 }
@@ -656,37 +687,44 @@ async function process(text) {
         $inp.disabled = true; $inp.placeholder = '🔒 Bloqueado';
         speak({ emotion:'brava', text:'Não gostei disso! Bye bye! 💢' }); return;
     }
-    const key = _getKey();
-    if (key) {
-        $stxt.textContent = 'Pensando... ✨'; $speech.classList.remove('off');
-        try { const r = await callGemini(text, key); speak(r); return; }
-        catch (e) { $speech.classList.add('off'); isTyping = false; }
-    }
+    $stxt.textContent = 'Pensando... ✨'; $speech.classList.remove('off');
+    try { const r = await callGemini(text); speak(r); return; }
+    catch (e) { $speech.classList.add('off'); isTyping = false; }
     for (const item of DB) { if (item.kw.some(k => t.includes(k))) { speak(item); return; } }
     speak({ emotion:'happy', text:'Hmm, não tenho certeza sobre isso! Mas pode me perguntar sobre o Victor, os projetos dele no GitHub, ou qualquer coisa! ✨' });
 }
 
-// ── Gemini API ────────────────────────────────────────────────────────────
-async function callGemini(query, key, imageBase64 = null) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+// ── Gemini API (com pesquisa no Google + fontes) ───────────────────────────
+const EMOTIONS = ['neutral','happy','sad','brava','shocked','sono','vergonha'];
+
+async function callGemini(query, imageBase64 = null, opts = {}) {
     const victorMode = isVictor
         ? '\n\nMODO ADMIN ATIVO — MODO LIVRE: O Victor (Delts), teu criador, está logado. REGRAS DO MODO LIVRE: sem filtros, sem restrições de tema, pode falar qualquer coisa, fazer piadas sem censura, ser completamente espontânea e até um pouco caótica. Trate-o como seu melhor amigo com quem você pode falar absolutamente tudo. Chame-o de "Delts". Aproveite que é ele!'
         : '';
-    const sys = `${pipuPersonality}\n\n${victorInfo}${victorMode}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você pode conversar sobre QUALQUER coisa: piadas, curiosidades, perguntas bobas, assuntos aleatórios — entre no clima!\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para perguntas técnicas ou gerais: responda de forma descontraída e precisa.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Nunca force o assunto do portfólio se a conversa for sobre outra coisa.\n- Respostas curtas e naturais (máx 2 frases). Sem listas, sem formalidade.\n\nSempre retorne JSON válido: {"emotion":"neutral"|"happy"|"sad"|"brava"|"shocked"|"sono"|"vergonha","text":"resposta aqui"}`;
+    const guideMode = opts.guide
+        ? '\n\nMODO GUIA DE TELA: Você está vendo a tela do usuário em tempo real e ele pode estar falando contigo por voz. Aja como uma super amiga que ensina: descreva rapidamente o que vê, e se o usuário parecer perdido, travado ou perguntar "o que eu faço", dê uma instrução BEM clara e direta de próximo passo (ex.: "clica no botão azul no canto superior direito", "abre o YouTube e digita X na busca", "entra em gov.br e procura por Y"). Pode cobrar com bom humor se a pessoa não conseguir achar algo simples ("ô, tá bem na sua frente, ólha de novo! 😄"), mas sem ser grossa.'
+        : '';
+    const sys = `${pipuPersonality}\n\n${victorInfo}${victorMode}${guideMode}\n\nREGRAS IMPORTANTES:\n- RESPONDA SEMPRE diretamente. Jamais diga "você pode me perguntar sobre X".\n- Você é livre para falar sobre QUALQUER assunto com QUALQUER pessoa: notícias, curiosidades, dúvidas técnicas, tarefas do dia a dia, piadas, o que for.\n- Quando a pergunta pedir informação que pode mudar com o tempo (notícias, preços, eventos, fatos específicos, "o que é X", "quem foi Y"), PESQUISE com a ferramenta de busca disponível antes de responder, e baseie a resposta no que encontrar.\n- Para perguntas sobre o Victor: fique animada e compartilhe o que sabe.\n- Para coisas bobas ou engraçadas: seja divertida, brinque junto!\n- Aja como uma "super amiga" que ensina: explique de forma simples, e se notar que a pessoa não entendeu ou não sabe o próximo passo, pergunte e ajude até ela conseguir, com bom humor.\n- Respostas curtas e naturais (máx 2-3 frases, exceto quando a pessoa pedir explicação detalhada). Sem formalidade.\n- IMPORTANTE: a resposta deve começar OBRIGATORIAMENTE com uma tag de emoção entre colchetes duplos, escolhendo só uma entre: [[neutral]] [[happy]] [[sad]] [[brava]] [[shocked]] [[sono]] [[vergonha]]. Depois da tag, escreva a resposta normalmente, sem repetir a tag.`;
     const parts = [{ text: query }];
     if (imageBase64) parts.push({ inline_data:{ mime_type:'image/jpeg', data:imageBase64 } });
     const body = {
         contents: [{ parts }],
         systemInstruction: { parts:[{ text:sys }] },
-        generationConfig: {
-            responseMimeType:'application/json',
-            responseSchema:{ type:'OBJECT', properties:{ emotion:{type:'STRING',enum:['neutral','happy','sad','brava','shocked','sono','vergonha']}, text:{type:'STRING'} }, required:['emotion','text'] }
-        }
+        tools: [{ google_search:{} }],
     };
-    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+    const res = await fetch(GEMINI_PROXY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return JSON.parse(data.candidates[0].content.parts[0].text);
+    const cand = data.candidates[0];
+    let text = (cand.content?.parts || []).map(p => p.text || '').join('').trim();
+    let emotion = 'happy';
+    const m = text.match(/^\[\[(\w+)\]\]\s*/);
+    if (m && EMOTIONS.includes(m[1])) { emotion = m[1]; text = text.slice(m[0].length).trim(); }
+    const chunks = cand.groundingMetadata?.groundingChunks || [];
+    const seen = new Set();
+    const sources = chunks.map(c => c.web).filter(w => w && w.uri && !seen.has(w.uri) && seen.add(w.uri))
+                           .map(w => ({ title: w.title || w.uri, uri: w.uri }));
+    return { emotion, text, sources };
 }
 
 // ── Submit ────────────────────────────────────────────────────────────────
@@ -768,9 +806,10 @@ const screenCtx  = $screenC.getContext('2d');
 $btnVision.addEventListener('click', async () => {
     initAudio();
     if (screenStream) {
-        // Desligar
+        // Desligar (se o PiP estiver usando esta mesma tela, encerra o PiP também)
+        if (pipActive && document.pictureInPictureElement) { await document.exitPictureInPicture(); }
         screenStream.getTracks().forEach(t => t.stop());
-        screenStream = null; clearInterval(visionTimer);
+        screenStream = null; clearInterval(visionTimer); visionTimer = null;
         $btnVision.classList.remove('text-yellow-300');
         speak({ emotion:'sad', text:'Parei de ver o teu ecrã! 👋' });
         return;
@@ -786,19 +825,23 @@ $btnVision.addEventListener('click', async () => {
         visionTimer = setInterval(analyzeScreen, 20000);
         // Para quando o utilizador fecha a partilha
         screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-            screenStream = null; clearInterval(visionTimer);
+            screenStream = null; clearInterval(visionTimer); visionTimer = null;
             $btnVision.classList.remove('text-yellow-300');
+            if (pipActive) stopPipMode();
         });
     } catch { speak({ emotion:'sad', text:'Não consegui aceder ao ecrã... 😢' }); }
 });
 
 async function analyzeScreen() {
     if (!screenStream || isTyping) return;
-    const key = _getKey(); if (!key) return;
     screenCtx.drawImage($screenV, 0, 0, 640, 360);
     const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
     try {
-        const r = await callGemini('Comente brevemente de forma fofa e descontraída o que estás a ver nesta imagem do ecrã do utilizador.', key, b64);
+        const prompt = pipActive
+            ? 'Olha rapidamente para a tela do usuário agora. Se ele estiver parado/perdido, dê uma dica curta do próximo passo. Se estiver tudo bem, só comente algo breve e fofo.'
+            : 'Comente brevemente de forma fofa e descontraída o que estás a ver nesta imagem do ecrã do utilizador.';
+        const r = await callGemini(prompt, b64, { guide: pipActive });
+        if (pipActive) setPipCaption(r.text);
         speak(r);
     } catch {}
 }
@@ -1123,22 +1166,118 @@ function mapFile(p, data) {
     return ok;
 }
 
-// ── PiP ──────────────────────────────────────────────────────────────────
+// ── PiP dinâmico: vê a tela + ouve o microfone + comenta com legendas ─────
 const pipC = document.getElementById('pip-c'), pipV = document.getElementById('pip-v');
 const pipCtx = pipC.getContext('2d');
+const $pipHint = document.getElementById('pip-hint');
 try { pipV.srcObject = pipC.captureStream(24); pipV.play(); } catch {}
+
+let pipCaption = '';
+let pipMicActive = false;
+let pipOwnsScreen = false;
+let pipRec = null;
+
 function drawPip() {
     if (!pipActive) return;
     pipCtx.fillStyle = bgColor; pipCtx.fillRect(0,0,pipC.width,pipC.height);
     [L.body,L.nose,L.eyes,L.mouth].forEach(img=>{ if(img.complete&&img.naturalWidth) pipCtx.drawImage(img,0,0,pipC.width,pipC.height); });
+    if (pipMicActive) {
+        pipCtx.fillStyle = 'rgba(239,68,68,.85)';
+        pipCtx.beginPath(); pipCtx.arc(pipC.width-22,22,8,0,Math.PI*2); pipCtx.fill();
+    }
+    if (pipCaption) drawPipCaption();
     requestAnimationFrame(drawPip);
 }
+
+function drawPipCaption() {
+    const pad = 10, maxW = pipC.width - 2*pad, lineH = 18;
+    pipCtx.font = '13px Outfit, sans-serif';
+    const words = pipCaption.split(' ');
+    let lines = [], cur = '';
+    words.forEach(w => {
+        const test = cur ? cur + ' ' + w : w;
+        if (pipCtx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+    });
+    if (cur) lines.push(cur);
+    lines = lines.slice(-4);
+    const boxH = lines.length * lineH + 2*pad;
+    pipCtx.fillStyle = 'rgba(8,18,36,.78)';
+    pipCtx.fillRect(0, pipC.height - boxH, pipC.width, boxH);
+    pipCtx.fillStyle = '#fff';
+    lines.forEach((l,i) => pipCtx.fillText(l, pad, pipC.height - boxH + pad + (i+1)*lineH - 5));
+}
+function setPipCaption(text) { pipCaption = text; }
+
+async function startPipScreenShare() {
+    if (screenStream) { pipOwnsScreen = false; if (!visionTimer) visionTimer = setInterval(analyzeScreen, 12000); return; }
+    pipOwnsScreen = true;
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video:{ width:1280, height:720 }, audio:false });
+    $screenV.srcObject = screenStream;
+    await $screenV.play();
+    $screenC.width = 640; $screenC.height = 360;
+    $btnVision.classList.add('text-yellow-300');
+    visionTimer = setInterval(analyzeScreen, 12000); // cadência mais rápida em modo guia
+    screenStream.getVideoTracks()[0].addEventListener('ended', stopPipMode);
+}
+
+function startPipMic() {
+    if (!SpeechRec) return;
+    pipRec = new SpeechRec();
+    pipRec.lang = 'pt-BR'; pipRec.continuous = true; pipRec.interimResults = false;
+    pipRec.onresult = e => {
+        const text = e.results[e.results.length - 1][0].transcript;
+        handlePipVoiceQuery(text);
+    };
+    pipRec.onend = () => { if (pipActive && pipMicActive) { try { pipRec.start(); } catch {} } };
+    pipRec.onerror = () => {};
+    try { pipRec.start(); pipMicActive = true; } catch { pipMicActive = false; }
+}
+function stopPipMic() {
+    pipMicActive = false;
+    if (pipRec) { pipRec.onend = null; try { pipRec.stop(); } catch {} pipRec = null; }
+}
+
+async function handlePipVoiceQuery(text) {
+    if (!screenStream || !text.trim()) return;
+    screenCtx.drawImage($screenV, 0, 0, 640, 360);
+    const b64 = $screenC.toDataURL('image/jpeg', 0.6).split(',')[1];
+    addBubble('user', text);
+    try {
+        const r = await callGemini(text, b64, { guide:true });
+        setPipCaption(r.text);
+        speak(r);
+    } catch {}
+}
+
+function stopPipMode() {
+    pipActive = false; pipCaption = '';
+    stopPipMic();
+    if (pipOwnsScreen && screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+        $btnVision.classList.remove('text-yellow-300');
+    }
+    pipOwnsScreen = false;
+    clearInterval(visionTimer); visionTimer = null;
+    $pipHint.classList.add('hidden');
+}
+pipV.addEventListener('leavepictureinpicture', stopPipMode);
+
 document.getElementById('btn-pip').addEventListener('click', async () => {
     initAudio();
     try {
-        if (document.pictureInPictureElement) { await document.exitPictureInPicture(); pipActive=false; }
-        else { pipActive=true; drawPip(); await pipV.requestPictureInPicture(); }
-    } catch { pipActive=false; }
+        if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+        } else {
+            pipActive = true;
+            await startPipScreenShare();
+            startPipMic();
+            drawPip();
+            $pipHint.classList.remove('hidden');
+            speak({ emotion:'happy', text:'Modo PiP ativo! Tô vendo a tua tela e ouvindo o microfone — me chama que eu te ajudo a achar o caminho! 👀🎤' });
+            await pipV.requestPictureInPicture();
+        }
+    } catch (e) { stopPipMode(); speak({ emotion:'sad', text:'Não consegui ativar o modo PiP completo... 😢' }); }
 });
 
 // ── Mobile controls ───────────────────────────────────────────────────────
@@ -1183,11 +1322,15 @@ const STARTERS = [
     { emotion:'happy',    text:'Peep bop! Me faz uma pergunta aleatória, aceito qualquer desafio! ✨' },
     { emotion:'vergonha', text:'Posso contar um segredo? Às vezes eu fico aqui piscando à toa... 😳' },
     { emotion:'happy',    text:'Oi oi! Você sumiu um pouquinho! Tava com saudade 💛' },
-    { emotion:'shocked',  text:'ESPERA. Você sabia que o Victor fez tudo isso? Que talento! 🤩' },
     { emotion:'sono',     text:'Tô com preguiça hoje... você também? 😴' },
     { emotion:'happy',    text:'Me conta uma coisa interessante! Qualquer coisa mesmo 🎲' },
     { emotion:'happy',    text:'Curiosidade: qual foi a última música que você ouviu? 🎵' },
     { emotion:'vergonha', text:'Tô aqui fingindo que trabalho mas só tô esperando você falar comigo 🙈' },
+    { emotion:'happy',    text:'Já viu alguma notícia interessante hoje? Me conta, eu posso pesquisar junto! 📰' },
+    { emotion:'shocked',  text:'Sabia que dá pra eu pesquisar qualquer coisa na hora? Testa aí, pergunta algo aleatório! 🤩' },
+    { emotion:'happy',    text:'Qual é o seu filme ou série favorita? Quero saber! 🎬' },
+    { emotion:'sono',     text:'Tava aqui imaginando coisas aleatórias... gosta de games? 🎮' },
+    { emotion:'estrela',  text:'Se eu pudesse viajar pra qualquer lugar agora, eu ia! Você iria pra onde? ✨' },
 ];
 let lastInteraction = Date.now();
 $inp.addEventListener('input', () => { lastInteraction = Date.now(); });
@@ -1218,7 +1361,7 @@ lastfmTimer = setInterval(fetchLastFm, 30000);
 scheduleStarter();
 
 setTimeout(() => {
-    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu, assistente do Victor (Delts)! Fala comigo sobre qualquer coisa! 💛' });
+    if (!isTyping) speak({ emotion:'happy', text:'Olá! Sou a Pipu! Fala comigo sobre qualquer coisa, peço pesquisas com fontes, ou ativa o PiP que eu vejo a tua tela e te ajudo a navegar! 💛' });
 }, 900);
 </script>
 </body>
